@@ -8,6 +8,11 @@ library(leaflet)
 # https://datahub.io/core/geo-countries/r/countries.geojson
 countries <- readRDS("data/countries.RDS")
 
+
+color_area_IDs <- c(col_collect = "Collection date of top hit in each country",
+                    col_release = "Release date of top hit in each country",
+                    none        = "none")
+
 # score_ids <- c(pident = "Percent identity",
 #                evalue = "evalue",
 #                bitscore = "bitscore")

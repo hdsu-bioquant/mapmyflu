@@ -89,9 +89,6 @@ function(input, output, session) {
     
     
     # Add color by date
-    #my_countries$col_release <- blaster_summ$Collection_Date2[match(countries_react$blast_id, blaster_summ$Geo_Location)]
-    #my_countries$col_collect <- blaster_summ$Collection_Date2[match(countries_react$blast_id, blaster_summ$Geo_Location)]
-    #print(countries_react@data)
     
     x <- x %>% 
       # Fix collection date color
@@ -107,24 +104,6 @@ function(input, output, session) {
       mutate(fixdate2 = cut.Date(fixdate, 6, labels = FALSE)) %>%
       mutate(fixdate3 = cut.Date(fixdate, 6)) %>%
       mutate(col_release = sort(unique(as.character(fixdate3)))[fixdate2]) 
-    
-    
-    # select(Accession, pident, evalue, bitscore, Geo_Location, Host,
-    #        Release_Date, Collection_Date, length, mismatch, gapopen,
-    #        qstart, qend, sstart, send, Length, Isolation_Source, Species) %>% 
-    # 
-    # x <- countries_react@data %>%
-    #   mutate(fixdate = as.Date(gsub("32$", "15", density)))%>%
-    #   mutate(fixdate2 = cut.Date(fixdate, 6, labels = FALSE)) %>%
-    #   mutate(fixdate3 = cut.Date(fixdate, 6)) %>%
-    #   mutate(fixdate = sort(unique(as.character(fixdate3)))[fixdate2])
-    # 
-    # countries_react$density <- x$fixdate
-    
-    
-    
-    
-    
     
     #------------------------------------#
     #     Ad coordinates to blaster      #
@@ -238,53 +217,47 @@ function(input, output, session) {
       mutate(cums = cumsum(cums)) %>%
       filter(cums == 1)
 
-    #print(blaster_summ)
 
 
     countries_react <- blaster_form_react()$my_countries[blaster_form_react()$my_countries$blast_id %in% blaster_summ$Geo_Location,]
 
-    countries_react$density <- blaster_summ$Collection_Date2[match(countries_react$blast_id, blaster_summ$Geo_Location)]
-    countries_react$density <- blaster_summ$col_collect[match(countries_react$blast_id, blaster_summ$Geo_Location)]
-    #print(countries_react@data)
+    #countries_react$density <- blaster_summ$Collection_Date2[match(countries_react$blast_id, blaster_summ$Geo_Location)]
     
+    #countries_react$density <- blaster_summ$col_collect[match(countries_react$blast_id, blaster_summ$Geo_Location)]
+    colID <- names(color_area_IDs)[color_area_IDs %in% input$sel_area_col]
     
-    # <- x %>% 
-    #   # Fix collection date color
-    #   mutate(fixdate = as.Date(gsub("32$", "15", Collection_Date2)))%>%
-    #   mutate(fixdate2 = cut.Date(fixdate, 6, labels = FALSE)) %>%
-    #   mutate(fixdate3 = cut.Date(fixdate, 6)) %>%
-    #   mutate(col_collect = sort(unique(as.character(fixdate3)))[fixdate2]) %>% 
-    #   # Fix Release date color
-    #   mutate(fixdate = as.Date(Release_Date))%>%
-    #   mutate(fixdate2 = cut.Date(fixdate, 6, labels = FALSE)) %>%
-    #   mutate(fixdate3 = cut.Date(fixdate, 6)) %>%
-    #   mutate(col_release = sort(unique(as.character(fixdate3)))[fixdate2]) 
+    if (colID == "none") {
+      blaster_summ <- blaster_summ %>% 
+        mutate(area_col = "")
+      
+      leafletProxy("map", data = blaster_summ) %>%
+        clearControls() %>%
+        clearShapes()
+    } else {
+      blaster_summ <- blaster_summ %>% 
+        mutate(area_col = !! sym(colID))
+      
+      #print(blaster_summ)
+      countries_react$density <- blaster_summ$area_col[match(countries_react$blast_id, blaster_summ$Geo_Location)]
+      #print(countries_react@data)
+      pal <- colorFactor("YlOrRd", domain = sort(unique(countries_react$density)))
+      
+      leafletProxy("map", data = blaster_summ) %>%
+        clearControls() %>%
+        clearShapes() %>%
+        addPolygons(data = countries_react,
+                    fillColor = ~pal(countries_react$density),
+                    weight = 0.5,
+                    opacity = 1,
+                    color = "white",
+                    dashArray = "3",
+                    fillOpacity = 0.7
+        ) %>%
+        addLegend(pal = pal, values = ~countries_react$density, opacity = 0.7, title = NULL,
+                  position = "bottomright")
+    }
 
-    # x <- countries_react@data %>%
-    #   mutate(fixdate = as.Date(gsub("32$", "15", density)))%>%
-    #   mutate(fixdate2 = cut.Date(fixdate, 6, labels = FALSE)) %>%
-    #   mutate(fixdate3 = cut.Date(fixdate, 6)) %>%
-    #   mutate(fixdate = sort(unique(as.character(fixdate3)))[fixdate2])
-    # 
-    # countries_react$density <- x$fixdate
-    print(countries_react@data)
-    # print(sort(unique(countries_react$density)))
-
-    pal <- colorFactor("YlOrRd", domain = sort(unique(countries_react$density)))
-
-    leafletProxy("map", data = blaster_summ) %>%
-      clearControls() %>%
-      clearShapes() %>%
-      addPolygons(data = countries_react,
-                  fillColor = ~pal(countries_react$density),
-                  weight = 0.5,
-                  opacity = 1,
-                  color = "white",
-                  dashArray = "3",
-                  fillOpacity = 0.7
-                  ) %>%
-      addLegend(pal = pal, values = ~countries_react$density, opacity = 0.7, title = NULL,
-                position = "bottomright")
+    
   })
   
   #----------------------------------------------------------------------------#
@@ -298,8 +271,8 @@ function(input, output, session) {
                collection_months <= fil_by_collection_date()[2])
 
 
-    print(dim(blaster_map))
-    print(input$date_range)
+    #print(dim(blaster_map))
+    #print(input$date_range)
 
     #print(class(blaster_react))
 
