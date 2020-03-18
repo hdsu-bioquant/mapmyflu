@@ -25,27 +25,62 @@ function(input, output, session) {
     clearstatus$clear <- FALSE
   }, priority = 1000)
   
+  observeEvent(input$clear_stringSequence, {
+    reset("stringSequence")
+  }, priority = 1000)
+  
+  fasta_checker <- function() {
+    
+  }
   
   blaster_react <- eventReactive(input$searchSequence, {
     
+    
+    # if true will run demo or text from box
     if( clearstatus$loaded & clearstatus$clear ){
-    #if(is.null(input$file1$datapath) | all(c(clearstatus$loaded, clearstatus$clear)) ){
-      shiny::showNotification("Using default fasta sequence",
-                              duration = 5, closeButton = TRUE,
-                              type = "warning")
-      if (input$seq_type == "nucleotide") {
-        my_path <- "testquery/SARScov2_query_nucleotide.fasta"
+      #-----------------------------------------------------------------#
+      #             Run from fasta sequence in box                      #
+      #-----------------------------------------------------------------#
+      if (input$stringSequence != "> my_corona") {
+        my_path <- "data/inline.fasta"
+        writeLines(input$stringSequence, my_path)
+        fast_val <- validate_fasta(my_path, input$seq_type)
+        if (!fast_val) {
+          shiny::showNotification("Invalid sequence\n 
+                                please check if the sequence contains header\n 
+                                and is of the correct type ",
+                                  duration = 10, closeButton = TRUE,
+                                  type = "error")
+          return(data.frame())
+        }
+        
       } else {
-        my_path <- "testquery/SARScov2_query_protein.fasta"
+      #-----------------------------------------------------------------#
+      #                   Run from examples                             #
+      #-----------------------------------------------------------------#
+        shiny::showNotification("Using default fasta sequence",
+                                duration = 5, closeButton = TRUE,
+                                type = "warning")
+        if (input$seq_type == "nucleotide") {
+          my_path <- "testquery/SARScov2_query_nucleotide.fasta"
+        } else {
+          my_path <- "testquery/SARScov2_query_protein.fasta"
+        }
       }
-    } else {
+      #-----------------------------------------------------------------#
+      #                Run from uploaded fasta                          #
+      #-----------------------------------------------------------------#
+    } else { # will use fasta file
       clearstatus$clear <- TRUE
       clearstatus$loaded <- TRUE
       
+      if (input$stringSequence != "> my_corona") {
+        shiny::showNotification("Text box is not empty, but will use uploaded fasta file",
+                                duration = 5, closeButton = TRUE,
+                                type = "error")
+      } 
+      
       my_path <- input$file1$datapath
-      #print(input$file1)
-      reset("file1")
-      #print(input$file1)
       if (input$seq_type == "nucleotide") {
         fast_val <- validate_fasta(my_path, "nucleotide")
       } else {
@@ -54,30 +89,24 @@ function(input, output, session) {
       if (!fast_val) {
         
         shiny::showNotification("Invalid sequence\n 
-                                please check if sequence contains header\n 
+                                please check if the sequence contains header\n 
                                 and is of the correct type ",
                                 duration = 10, closeButton = TRUE,
                                 type = "error")
-        # session$reload()
-        # return()
-        # print("session reload not working")
-        #return(readRDS("data/blaster_empty.RDS"))
-        #reset("file1")
         return(data.frame())
       }
       
       
       
     }
+    reset("file1")
+    reset("stringSequence")
     
-    #print(input$stringSequence)
-    #print(my_path)
-    # x <- readRDS(my_path) %>% 
-    #   mutate(collection_months = substr(Collection_Date, 1, 7)) %>% 
-    #   mutate(evalue_log10 = -log10(evalue + 0.000001))
-    #print(head(x))
     
-    #reset("file1")
+    
+    #--------------------------------------------------------------------------#
+    #                                     Run BLAST                            #
+    #--------------------------------------------------------------------------#
     print(my_path)
     
     #my_path <- "testquery/SARScov2_query_nucleotide.fasta"
@@ -85,10 +114,6 @@ function(input, output, session) {
     blast_strp <- paste0("blastp -query ", my_path, " -task 'blastp' -db db/protein/covid19 ")
     blast_strn <- paste0("blastn -query ", my_path, " -task 'megablast' -db db/nucleotide/covid19 ")
     blast_strr <- "-outfmt 6 -num_threads 1 > data/SARScov2_alignment.tsv"
-    
-    # blast_strp <- "blastp -query data/my_query.fasta -task 'blastp' -db db/protein/covid19 "
-    # blast_strn <- "blastn -query data/my_query.fasta -task 'megablast' -db db/nucleotide/covid19 "
-    # blast_strr <- "-outfmt 6 -num_threads 1 > data/SARScov2_alignment.tsv"
     
     if (input$seq_type == "nucleotide") {
       system(paste0(blast_strn, blast_strr), wait = TRUE)
@@ -120,11 +145,6 @@ function(input, output, session) {
     align <- align[order(align$pident, - align$evalue, align$bitscore, 
                          decreasing = TRUE),]
     
-    #print(head(align))
-    #print(str(align))
-    
-    # print(system(paste0("which blastp"), wait = TRUE))
-    # print(system(paste0("pwd"), wait = TRUE))
     
     align %>% 
       filter(!Geo_Location == "") %>% 
@@ -184,13 +204,6 @@ function(input, output, session) {
         mutate(mapper = if_else(!is.na(ADMIN), ADMIN, ISO_A3)) %>% 
         filter(!is.na(mapper))
       
-      # country_mapper <- data.frame(blast_id_orig = unique(x$Geo_Location),
-      #                              blast_id = tolower(unique(x$Geo_Location)), 
-      #                              stringsAsFactors = FALSE) %>% 
-      #   mutate(ADMIN  = match(blast_id, tolower(countries$ADMIN))) %>% 
-      #   mutate(ISO_A3 = match(blast_id, tolower(countries$ISO_A3))) %>% 
-      #   mutate(mapper = if_else(!is.na(ADMIN), ADMIN, ISO_A3)) %>% 
-      #   filter(!is.na(mapper))
       
       
       # keep only countries in the blast results
@@ -353,16 +366,7 @@ function(input, output, session) {
         mutate(cums = cumsum(cums)) %>%
         filter(cums == 1)
 
-      y <- blaster_form_react()$df %>%
-        filter(Geo_Location %in% fil_by_location()) #%>%
-        # filter(collection_months >= fil_by_collection_date()[1] &
-        #          collection_months <= fil_by_collection_date()[2]) %>%
-        # mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
-        #                                   paste0(Collection_Date, "-32"),
-        #                                   Collection_Date))
-      # print(y)
-      # print("hfghdhhd")
-      # print(input$date_range)
+      
       
       countries_react <- blaster_form_react()$my_countries[blaster_form_react()$my_countries$blast_id %in% blaster_summ$Geo_Location,]
       colID <- names(color_area_IDs)[color_area_IDs %in% input$sel_area_col]
@@ -403,7 +407,7 @@ function(input, output, session) {
                       fillOpacity = 0.7
           ) %>%
           addLegend(pal = pal, values = ~countries_react$density, opacity = 0.7, title = NULL,
-                    position = "bottomright")
+                    position = "topright")
       }
     } else {
       leafletProxy("map") %>%

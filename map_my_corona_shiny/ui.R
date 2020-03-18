@@ -38,7 +38,14 @@ dashboardPage(
                 accept = c(".RDS", ".fa", ".fasta")),
 
       # Search fasta sequence
-      textAreaInput("stringSequence", "Search sequence...", "> my_corona\natatataaccddf"),
+      textAreaInput("stringSequence", "Search sequence...", "> my_corona"),
+      actionBttn(
+        inputId = "clear_stringSequence",
+        label = "Clear", 
+        style = "minimal",
+        size = "xs",
+        color = "default"
+      ),
       
       awesomeRadio(
         inputId = "seq_type",
@@ -55,7 +62,8 @@ dashboardPage(
         color = "danger"
       ),
       h6("Click Submit without any input", align = "center"),
-      h6("to display results for MT188340", align = "center"),
+      h6("to display results for MT188340 (nucleotide)", align = "center"),
+      h6("or QHN73805 (protein)", align = "center"),
 
 
       br(),
