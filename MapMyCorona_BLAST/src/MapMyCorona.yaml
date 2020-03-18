@@ -1,0 +1,14 @@
+name: MapMyCorona
+channels:
+ - r
+ - bioconda
+ - conda-forge
+dependencies:
+ - r-base=3.6.2
+ - blast
+ - r-leaflet
+ - geojsonio
+ - r-tidyverse
+ - pip
+ #- pip:
+ # # - xyz
