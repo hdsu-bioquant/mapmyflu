@@ -5,8 +5,54 @@ library(shinyjs)
 
 
 dashboardPage(
+  #----------------------------------------------------------------------------#
+  #                                Header                                      #
+  #----------------------------------------------------------------------------#
+  dashboardHeader(
+    #title = "Map my Corona",
+    title = tags$a(href="https://www.hdsu.org/",
+                   tags$img(src="map_my_corona_logo.png",height="50px")),
+    #titleWidth = 400,
+    tags$li(class = "dropdown",
+            tags$a(href="https://www.hdsu.org/", target="_blank",
+                   tags$style(".main-header {max-height: 55px}"),
+                   tags$style(".main-header .logo {height: 55px}"),
+                   tags$img(height = "30px", alt="SNAP Logo", src="logo_hdsu.png")
+            )
+    )
+  ),
+  # dashboardHeader(# Set height of dashboardHeader
+  #   tags$li(class = "dropdown",
+  #           tags$style(".main-header {max-height: 60px}"),
+  #           tags$style(".main-header .logo {height: 60px}")
+  #   ),
+  #   title = tags$a(href="https://www.hdsu.org/",
+  #                  tags$img(src="logo_hdsu.png",height="40")),
+  #   titleWidth = 400),
 
-  dashboardHeader(title = "Map my Corona"),
+  #dashboardHeader(title = "Map my Corona"),
+  
+  # dashboardHeader(title = 'Reporting Dashboard',
+  #                 tags$li(class = "dropdown",
+  #                         tags$a(href="https://www.hdsu.org/", target="_blank", 
+  #                                tags$img(height = "20px", alt="SNAP Logo", src="logo_hdsu.png")
+  #                         )
+  #                 ),
+  #                 dropdownMenuOutput('messageMenu'),
+  #                 dropdownMenu(type = 'notifications',
+  #                              notificationItem(text = '5 new users today', icon('users')),
+  #                              notificationItem(text = '12 items delivered', 
+  #                                               icon('truck'), status = 'success'),
+  #                              notificationItem(text = 'Server load at 86%', 
+  #                                               icon = icon('exclamation-triangle'), 
+  #                                               status = 'warning')),
+  #                 dropdownMenu(type = 'tasks',
+  #                              badgeStatus = 'success',
+  #                              taskItem(value = 90, color = 'green', 'Documentation'),
+  #                              taskItem(value = 17, color = 'aqua', 'Project X'),
+  #                              taskItem(value = 75, color = 'yellow', 'Server deployment'),
+  #                              taskItem(value = 80, color = 'red', 'Overall project'))
+  # ),
   
   #----------------------------------------------------------------------------#
   #                                Sidebar                                     #

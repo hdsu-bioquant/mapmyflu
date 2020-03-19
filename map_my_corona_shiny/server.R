@@ -10,7 +10,11 @@ library(shinyjs)
 # library(reticulate)
 # conda_list()
 # use_condaenv("blast")
-
+# py_config()
+# system("blastn -help ", wait = T)
+# system("conda list ", wait = T)
+# system("which python ", wait = T)
+# system("which blastn ", wait = T)
 
 function(input, output, session) {
   #----------------------------------------------------------------------------#
