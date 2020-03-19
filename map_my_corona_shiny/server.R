@@ -31,6 +31,9 @@ function(input, output, session) {
   
   observeEvent(input$clear_stringSequence, {
     reset("stringSequence")
+    reset("file1")
+    clearstatus$clear <- TRUE
+    
   }, priority = 1000)
   
   fasta_checker <- function() {
@@ -49,12 +52,20 @@ function(input, output, session) {
         my_path <- "data/inline.fasta"
         writeLines(input$stringSequence, my_path)
         fast_val <- validate_fasta(my_path, input$seq_type)
+        
         if (!fast_val) {
-          shiny::showNotification("Invalid sequence\n 
-                                please check if the sequence contains header\n 
-                                and is of the correct type ",
-                                  duration = 10, closeButton = TRUE,
-                                  type = "error")
+          sendSweetAlert(
+            session = session,
+            title = "Invalid sequence",
+            text = "please check if the sequence contains header and is of the correct type",
+            type = "error"
+          )
+          
+          # shiny::showNotification("Invalid sequence\n 
+          #                       please check if the sequence contains header\n 
+          #                       and is of the correct type ",
+          #                         duration = 10, closeButton = TRUE,
+          #                         type = "error")
           return(data.frame())
         }
         
@@ -77,6 +88,7 @@ function(input, output, session) {
     } else { # will use fasta file
       clearstatus$clear <- TRUE
       clearstatus$loaded <- TRUE
+      reset("file1")
       
       if (input$stringSequence != "> my_corona") {
         shiny::showNotification("Text box is not empty, but will use uploaded fasta file",
@@ -91,12 +103,17 @@ function(input, output, session) {
         fast_val <- validate_fasta(my_path, "protein")
       }
       if (!fast_val) {
-        
-        shiny::showNotification("Invalid sequence\n 
-                                please check if the sequence contains header\n 
-                                and is of the correct type ",
-                                duration = 10, closeButton = TRUE,
-                                type = "error")
+        sendSweetAlert(
+          session = session,
+          title = "Invalid sequence",
+          text = "please check if the sequence contains header and is of the correct type",
+          type = "error"
+        )
+        # shiny::showNotification("Invalid sequence\n 
+        #                         please check if the sequence contains header\n 
+        #                         and is of the correct type ",
+        #                         duration = 10, closeButton = TRUE,
+        #                         type = "error")
         return(data.frame())
       }
       
@@ -105,7 +122,7 @@ function(input, output, session) {
     }
     reset("file1")
     reset("stringSequence")
-    
+    shinyjs::hide(selector = "ul.menu-open")
     
     
     #--------------------------------------------------------------------------#
@@ -117,14 +134,16 @@ function(input, output, session) {
     # Run Blast
     blast_strp <- paste0("blastp -query ", my_path, " -task 'blastp' -db db/protein/covid19 ")
     blast_strn <- paste0("blastn -query ", my_path, " -task 'megablast' -db db/nucleotide/covid19 ")
-    blast_strr <- "-outfmt 6 -num_threads 1 > data/SARScov2_alignment.tsv"
+    
+    blast_stro <- paste0("-max_target_seqs ", input$blast_nres, " -evalue ", input$blast_evalt)
+    blast_strr <- " -outfmt 6 -num_threads 1 > data/SARScov2_alignment.tsv"
     
     if (input$seq_type == "nucleotide") {
-      system(paste0(blast_strn, blast_strr), wait = TRUE)
+      system(paste0(blast_strn, blast_stro, blast_strr), wait = TRUE)
       anno_query <- read.csv("data/SARScov2_nucleotide_metadata.csv",
                              header=TRUE, stringsAsFactors = FALSE)
     } else {
-      system(paste0(blast_strp, blast_strr), wait = TRUE)
+      system(paste0(blast_strp, blast_stro, blast_strr), wait = TRUE)
       anno_query <- read.csv("data/SARScov2_protein_metadata.csv",
                              header=TRUE, stringsAsFactors = FALSE)
     }
@@ -148,10 +167,10 @@ function(input, output, session) {
     align <- merge(align, anno_query, by = "Accession")
     align <- align[order(align$pident, - align$evalue, align$bitscore, 
                          decreasing = TRUE),]
-    
-    
+    print(dim(align))
     align %>% 
       filter(!Geo_Location == "") %>% 
+      filter(pident >= input$blast_pident_range[1] & pident <= input$blast_pident_range[2]) %>% 
       mutate(collection_months = substr(Collection_Date, 1, 7)) %>% 
       mutate(evalue_log10 = -log10(evalue + 0.000001))
     
@@ -286,15 +305,17 @@ function(input, output, session) {
   output$date_range <- renderUI({
     
     collection_months <- sort(unique(blaster_react()$collection_months))
-    if (length(collection_months) == 0 ) {
+    
+    if (length(collection_months) == 0 | is.null(collection_months)) {
       #collection_months <- c(0,0)
-      collection_months <- NULL
-      sliderTextInput(
-        inputId = "date_range",
-        label = "Date Range:", 
-        choices = NULL,
-        selected = NULL
-      )
+      #collection_months <- NULL
+      # sliderTextInput(
+      #   inputId = "date_range",
+      #   label = "Date Range:", 
+      #   choices = collection_months
+      #   #selected = NULL
+      # )
+      NULL
     } else {
       sliderTextInput(
         inputId = "date_range",
@@ -321,6 +342,12 @@ function(input, output, session) {
       setView(42, 16, 2) %>% 
       addProviderTiles(providers$CartoDB.DarkMatter)
   })
+  
+  # output$empty_map <- renderLeaflet({
+  #   leaflet() %>%
+  #     setView(42, 16, 2) %>% 
+  #     addProviderTiles(providers$CartoDB.DarkMatter)
+  # })
   
   fil_by_location <- function() {
     if (length(input$sel_country) == 0) {
@@ -421,7 +448,7 @@ function(input, output, session) {
         clearMarkers()
     }
 
-  })
+  }, priority = 5)
 
   #----------------------------------------------------------------------------#
   #                              Add clusters                                  #
@@ -452,7 +479,7 @@ function(input, output, session) {
                          fillOpacity = 1)
     }
 
-  })
+  }, priority = 1)
 
   
   
@@ -483,38 +510,63 @@ function(input, output, session) {
   
   
   observe(
-    output$gg_data_months <- renderPlot({
-      
-      # Input data is filtered 
-      blaster_form_react()$df %>% 
-        filter(Geo_Location %in% fil_by_location()) %>% 
-        filter(collection_months >= fil_by_collection_date()[1] &
-                 collection_months <= fil_by_collection_date()[2]) %>% 
-        mutate(collection_months = factor(collection_months, 
-                                          levels = sort(unique(collection_months)))) %>% 
-        ggplot(aes(x = collection_months, fill = collection_months)) +
-        geom_bar(stat = "count") +
-        theme_dark() + 
-        #scale_fill_tron()  +
-        theme(#legend.position = "none",
-          text = element_text(colour = "white"),
-          axis.text.x = element_text(colour = "white"),
-          axis.text.y = element_text(colour = "white"),
-          plot.background =element_rect(fill = "#2D2D2D"),
-          panel.background = element_rect(fill = "#2D2D2D"),
-          axis.line=element_blank(),
-          
-          axis.ticks=element_blank(),
-          axis.title.x=element_blank(),
-          #axis.title.y=element_blank(),
-          panel.grid = element_blank(),
-          legend.position="none") 
-      
+    if (nrow(blaster_react()) > 0 & !is.null(blaster_form_react()) ) {
+      output$gg_data_months <- renderPlot({
         
-    },
-    #width  = 100, 
-    height = 80
-    )
+        # Input data is filtered 
+        blaster_form_react()$df %>% 
+          filter(Geo_Location %in% fil_by_location()) %>% 
+          filter(collection_months >= fil_by_collection_date()[1] &
+                   collection_months <= fil_by_collection_date()[2]) %>% 
+          mutate(collection_months = factor(collection_months, 
+                                            levels = sort(unique(collection_months)))) %>% 
+          ggplot(aes(x = collection_months, fill = collection_months)) +
+          geom_bar(stat = "count") +
+          theme_dark() + 
+          #scale_fill_tron()  +
+          theme(#legend.position = "none",
+            text = element_text(colour = "white"),
+            axis.text.x = element_text(colour = "white"),
+            axis.text.y = element_text(colour = "white"),
+            plot.background =element_rect(fill = "#2D2D2D"),
+            panel.background = element_rect(fill = "#2D2D2D"),
+            axis.line=element_blank(),
+            
+            axis.ticks=element_blank(),
+            axis.title.x=element_blank(),
+            #axis.title.y=element_blank(),
+            panel.grid = element_blank(),
+            legend.position="none") 
+      },
+      #width  = 100, 
+      height = 80
+      )
+    } else {
+      # Placeholder in case of error
+      output$gg_data_months <- renderPlot({
+        data.frame() %>%
+          ggplot() +
+          #geom_bar(stat = "count") +
+          theme_dark() + 
+          theme(
+            line  = element_blank(),
+            rect  = element_blank(), 
+            title = element_blank(),
+            text  = element_blank(), 
+            #plot.background = element_blank(), 
+            #panel.background = element_blank(), 
+            plot.background =element_rect(fill = "black"),
+            panel.background = element_rect(fill = "black"), 
+            panel.border = element_blank(), 
+            panel.grid = element_blank(),
+            legend.position="none") 
+      },
+      height = 80
+      )
+      
+      
+    }
+    
   )
   
   

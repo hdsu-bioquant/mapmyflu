@@ -21,7 +21,8 @@ validate_fasta <- function(path_fa, type){
   f <- substr(x, 1, 1)
   # Check if it has header
   if (f[1] != ">") {
-    stop("Sequence is not a valid fasta sequence")
+    print("Sequence is not a valid fasta sequence")
+    return(FALSE)
   }
   
   # Check if nuc or prot
