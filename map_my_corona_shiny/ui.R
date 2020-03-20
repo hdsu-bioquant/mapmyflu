@@ -186,7 +186,7 @@ dashboardPage(
             inputId  = "sel_area_col",
             label    = "Color Area By:",
             choices  = unname(color_area_IDs),
-            selected = unname(color_area_IDs)[1],
+            selected = unname(color_area_IDs)[3],
             multiple = FALSE
           ),
           
