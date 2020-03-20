@@ -35,9 +35,28 @@ validate_fasta <- function(path_fa, type){
   
   # Remove header
   x <- x[!substr(x, 1, 1) == ">"]
+  
+  if (length(x) == 0) {
+    print("Only header provided")
+    return(FALSE)
+  }
+  
   # collapse and get unique letters
   x <- paste(x, collapse = "")
   x <- unique(strsplit(x, "")[[1]]) 
+  x <- toupper(x)
+  #print(x)
+  if (type == "protein") {
+    isnuc <- x %in% c("A", "G", "C", "T", "N", "U")
+    #print(isnuc)
+    if (all(isnuc)) {
+      print("None invalid characters but looks like nucleotide sequence")
+      return(FALSE)
+    }
+    
+    
+  }
+  
   
   if (type == "nucleotide") {
     nucs <- c("A", "C", "G", "T", "U", "R", "Y", "K", "M", 
@@ -51,10 +70,10 @@ validate_fasta <- function(path_fa, type){
   
   if (all(x %in% nucs)) {
     print("valid sequence")
-    TRUE
+    return(TRUE)
   } else {
     print("Not a valid sequence")
-    FALSE
+    return(FALSE)
   }
   
 }

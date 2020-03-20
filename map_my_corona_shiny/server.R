@@ -54,6 +54,7 @@ function(input, output, session) {
         my_path <- rand_fasta_name(1)
         writeLines(input$stringSequence, my_path)
         fast_val <- validate_fasta(my_path, input$seq_type)
+        reset("stringSequence")
         
         if (!fast_val) {
           blaster_filt(NULL)
@@ -163,10 +164,16 @@ function(input, output, session) {
     
     # Check if results are empty
     if (length(readLines("data/SARScov2_alignment.tsv")) == 0) {
-      shiny::showNotification("No hits found, 
-                                please check if sequence is of the correct type",
-                              duration = 10, closeButton = TRUE,
-                              type = "error")
+      sendSweetAlert(
+        session = session,
+        title = "No hits found",
+        text = "Please check if sequence is of the correct type and Blast options",
+        type = "error"
+      )
+      # shiny::showNotification("No hits found, 
+      #                           please check if sequence is of the correct type",
+      #                         duration = 10, closeButton = TRUE,
+      #                         type = "error")
       return(data.frame())
     } 
     
