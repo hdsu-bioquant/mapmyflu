@@ -12,32 +12,6 @@ dashboardPage(
     #title = "Map my Corona",
     title = tags$a(href="https://www.hdsu.org/",
                    tags$img(src="map_my_corona_logo.png",height="50px")),
-    #titleWidth = 400,
-    
-    # dropdownMenuOutput('messageMenu'),
-    # 
-    # dropdownMenu(type = 'tasks',
-    #              badgeStatus = 'success',
-    #              taskItem(value = 90, color = 'green', 'Documentation'),
-    #              taskItem(value = 17, color = 'aqua', 'Project X'),
-    #              taskItem(value = 75, color = 'yellow', 'Server deployment'),
-    #              taskItem(value = 80, color = 'red', 'Overall project')
-    # ),
-    # 
-    # dropdownMenu(type = 'notifications',
-    #              notificationItem(text = '5 new users today', icon('users')),
-    #              notificationItem(text = '12 items delivered',
-    #                               icon('truck'), status = 'success'),
-    #              notificationItem(text = 'Server load at 86%',
-    #                               icon = icon('exclamation-triangle'),
-    #                               status = 'warning')),
-    # dropdownMenu(type = 'tasks',
-    #              badgeStatus = 'success',
-    #              taskItem(value = 90, color = 'green', 'Documentation'),
-    #              taskItem(value = 17, color = 'aqua', 'Project X'),
-    #              taskItem(value = 75, color = 'yellow', 'Server deployment'),
-    #              taskItem(value = 80, color = 'red', 'Overall project')),
-    
     
     tags$li(class = "dropdown",
             tags$a(href="https://www.hdsu.org/", target="_blank",
@@ -48,16 +22,6 @@ dashboardPage(
     )
     
   ),
-  # dashboardHeader(# Set height of dashboardHeader
-  #   tags$li(class = "dropdown",
-  #           tags$style(".main-header {max-height: 60px}"),
-  #           tags$style(".main-header .logo {height: 60px}")
-  #   ),
-  #   title = tags$a(href="https://www.hdsu.org/",
-  #                  tags$img(src="logo_hdsu.png",height="40")),
-  #   titleWidth = 400),
-
-  #dashboardHeader(title = "Map my Corona"),
   
   # dashboardHeader(title = 'Reporting Dashboard',
   #                 tags$li(class = "dropdown",
@@ -85,6 +49,12 @@ dashboardPage(
   #                                Sidebar                                     #
   #----------------------------------------------------------------------------#
   dashboardSidebar(
+    
+    # menuItem(
+    #   "FAQ",
+    #   tabName = "faq",
+    #   icon = icon("question-circle")
+    # ),
 
     sidebarMenu(
       br(),
@@ -93,32 +63,7 @@ dashboardPage(
       h6("which displays the top hits", align = "center"),
       h6("in a spatial and temporal fashion.", align = "center"),
       tags$hr(),
-      #h6("Once displayed, you can filter the results by date or country.", align = "center"),
       
-      
-      
-      # menuItem(
-      #   "Multiple Incident Analysis",
-      #   tabName = "dashboard",
-      #   icon = icon("th")),      
-      # div(id = "mult", splitLayout(cellWidths = c("44%", "31%", "25%"),
-      #                              dateInput("datefrom", "Date From:", format = "mm/dd/yyyy", Sys.Date()-5),
-      #                              textInput("datefrom_hour", "Hour",
-      #                                        value = "12:00"),
-      #                              textInput("datefrom_noon","AM/PM", value = "AM")),      
-      #     splitLayout(cellWidths = c("44%", "31%", "25%"),
-      #                 dateInput("dateto", "Date To:", format = "mm/dd/yyyy"),
-      #                 textInput("dateto_hour", "Hour",
-      #                           value = "11:59"),
-      #                 textInput("dateto_noon","AM/PM", value = "PM"))
-      # ),
-      # menuItem("Single Analysis", 
-      #          tabName = "widgets", 
-      #          icon = icon("th")
-      # ),
-      # div(id = "single", style="display: none;", numericInput("tckt", "Ticket Number : ", 12345,  width = 290)),
-      # submitButton("Submit", width = "290"),
-      # Horizontal line ----
       
       h4("Search sequence", align = "center"),
       h6("from Fasta or from search box", align = "center"),
@@ -263,14 +208,6 @@ dashboardPage(
           
         )
         
-        #tags$hr()
-        # selectInput(
-        #   inputId  = "sel_area_col",
-        #   label    = "Color Area By:",
-        #   choices  = unname(color_area_IDs),
-        #   selected = unname(color_area_IDs)[1],
-        #   multiple = FALSE
-        # )
       ),
       
       tags$hr(),
@@ -314,70 +251,167 @@ dashboardPage(
       tabItem(
         tabName = "faq",
         fluidRow(
+          #img(src="map_my_corona_logo.png", width=100),
+          #tags$style(type = "text/css", "#help_main {height: calc(100vh ) !important;}"),
           box(
-            title = "Description", width = NULL, background = "black",
-            "MapMyCorona is a blast-server for SARS CoV-2 sequences (protein or DNA) which displays the top hits in a spatial and temporal fashion.",
-            "Once displayed, you can filter the results by date or country."
+            id = "help_main",
+            width = 5,
+            height = 400,
+            title = div(img(src="map_my_corona_logo.png", width="60%"), 
+                        style="text-align: center;") ,
+            #title = img(src="map_my_corona_logo.png", width="60%", align = "center" ),
+            status = "warning",
+            background = "black",
+            tags$hr(),
+            h4("MapMyCorona is a blast-server for SARS CoV-2 sequences 
+            (protein or DNA) which displays the top hits in a spatial 
+            and temporal fashion.", 
+               align = "center"), 
+            h4("Once displayed, you can filter the results by date or country.",
+               align = "center")
+          ),
+          #tags$style(type = "text/css", "#help_hdsu {height: calc(100vh ) !important;}"),
+          box(
+            id = "help_hdsu",
+            width = 7, 
+            height = 400,
+            title = img(src="logo_hdsu.png", width="100%"),
+            #status = "warning",
+            background = "black",
+            #tags$hr(),
+            h4("MapMyCorona was developed by the 
+            Biomedical Genomics Group @ Health Data Science Unit 
+            at the BioQuant Center and Medical Faculty Heidelberg",
+               align = "center"),
+            h4(tags$a(href="https://www.hdsu.org/", "Visit us here!"),
+               align = "center"),
+            
+            tags$hr(),
+            
+            h1(tags$a(href="https://github.com/hdsu-bioquant/mapmyflu", icon("github")), align = "center"),
+            #h1(icon("github"), align = "center"),
+            h4("If you have any suggestion please create an issue in our GitHub repository",
+               tags$a(href="https://github.com/hdsu-bioquant/mapmyflu", "hdsu-bioquant/mapmyflu"),
+               align = "center")
+            
+          )
+        ),
+        
+        fluidRow(
+          box(
+            collapsible = TRUE,
+            collapsed   = TRUE,
+            title = h4(icon("search"),"Search sequence", align = "center"),
+            width = 4, 
+            background = "blue",
+            
+            p("A nucleotide or protein BLAST is run using 
+              as query the uploaded sequence or a specified
+              sequence in the search box.",
+               align = "center"),
+            
+            h4(icon("cog"), align = "center"),
+            h4("BLAST Options", align = "center"),
+            p("Number of results: Maximum number of aligned sequences to keep."),
+            p("Expectation value (E) threshold: Expectation value threshold for saving hits."),
+            p("Percent identity (pident): Only keep hits inside this range.")
+            
           ),
           
           box(
-            title = "BLAST Options", width = NULL, background = "light-blue",
-            "..."
+            collapsible = TRUE,
+            collapsed   = TRUE,
+            title = h4(icon("globe"), "Map", align = "center"),
+            width = 4,
+            background = "blue",
+            
+            p("Displays a world map showing the geographical location 
+              of each hit, hits are clustered together depending on 
+              the zoom level, to easily visualize regions with more hits."),
+            p("Clicking on a hit shows a stats summary of 
+              the BLAST result and also provides a link to the 
+              GenBank entry for that particular hit."),
+            p("The area of each country with at least one hit 
+              is also colored according to the collection date, 
+              publication date or pident of its top  hit"),
+            p("The map is responsive to all filters provided in the Options tab,
+              and to the date range provided on top of the map.")
+          ),
+          
+          box(
+            collapsible = TRUE,
+            collapsed   = TRUE,
+            title = h4(icon("bar-chart"), "Data explorer", align = "center"),
+            width = 4,
+            background = "blue",
+            p("Displays a table with all hits currently shown in the map."),
+            p("A button is provided to download the table in csv format.")
           )
+          
           
         ),
         
-        #tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;}"),
-        #leafletOutput("empty_map", height = 200),
-        # box(
-        #   height = 200,
-        #   width = 12,
-        #   #leafletOutput("empty_map"),
-        #   leafletOutput("empty_map", height = 200),
-        #   
-        #   "Empty box"
-        # )
         
-        # fluidRow(
-        #   tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;}"),
-        #   box(
-        #     height = 200,
-        #     width = 12,
-        #     #leafletOutput("empty_map"),
-        #     leafletOutput("empty_map", height = 200),
-        #     
-        #     "Empty box"
-        #   )
-        # )
+        
+        fluidRow(
+          
+          box(
+            collapsible = TRUE,
+            collapsed   = TRUE,
+            title = h4(icon("cogs"), "Options", align = "center"),
+            width = 4,
+            background = "red",
+            p("Provides several filtering options on the displayed hits."),
+            p("A drop down menu with a list of all countries with at least one 
+              hit, is provided to keep only hits in the selected countries."),
+            
+            h4(icon("palette"), align = "center"),
+            p("Coloring options: options to change the color of individual hits 
+              or the country area"),
+            
+            h4(icon("filter"), align = "center"),
+            p("Score filtering: options to filter hits according to their 
+              BLAST results stats")
+            
+          ),
+          
+          box(
+            collapsible = TRUE,
+            collapsed   = TRUE,
+            title = h4(icon("palette"), "Coloring options", align = "center"),
+            width = 4,
+            background = "yellow",
+            
+            p("Options to change the color of individual hits 
+              or the country area"),
+            p("Select score metric to color individual hits: select which 
+              score metric you want to use to color the individual hits"),
+            p("Color Area By: select option to change color of countries 
+              with at least one hit")
+          ),
+          
+          box(
+            collapsible = TRUE,
+            collapsed   = TRUE,
+            title = h4(icon("filter"), "Score filtering", align = "center"),
+            width = 4,
+            background = "yellow",
+            p("Options to filter hits according to their 
+              BLAST results stats"),
+            p("Percent identity (pident): keep only hits between this range 
+              of pident scores"),
+            p("Expectation value (E): keep only hits between this range 
+              of evalue scores"),
+            p("bitscore: keep only hits between this range 
+              of bitscore scores")
+            
+          )
+        ) 
       ),
 
       tabItem(
         tabName = "maps",
         fluidRow(
-          # dropdownButton(
-          #   
-          #   tags$h3("List of Inputs"),
-          #   
-          #   selectInput(inputId = 'xcol',
-          #               label = 'X Variable',
-          #               choices = names(iris)),
-          #   
-          #   selectInput(inputId = 'ycol',
-          #               label = 'Y Variable',
-          #               choices = names(iris),
-          #               selected = names(iris)[[2]]),
-          #   
-          #   sliderInput(inputId = 'clusters',
-          #               label = 'Cluster count',
-          #               value = 3,
-          #               min = 1,
-          #               max = 9),
-          #   
-          #   circle = TRUE, status = "danger",
-          #   icon = icon("gear"), width = "300px",
-          #   
-          #   tooltip = tooltipOptions(title = "Click to see inputs !")
-          # ),
           
           box(
             height = 100,

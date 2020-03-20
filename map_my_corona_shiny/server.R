@@ -54,6 +54,8 @@ function(input, output, session) {
         fast_val <- validate_fasta(my_path, input$seq_type)
         
         if (!fast_val) {
+          blaster_filt(NULL)
+          
           sendSweetAlert(
             session = session,
             title = "Invalid sequence",
@@ -111,6 +113,7 @@ function(input, output, session) {
         fast_val <- validate_fasta(my_path, "protein")
       }
       if (!fast_val) {
+        blaster_filt(NULL)
         sendSweetAlert(
           session = session,
           title = "Invalid sequence",
@@ -473,7 +476,7 @@ function(input, output, session) {
   output$hitsafterfil <- renderValueBox({
     if (is.null(nrow(blaster_filt()))) {
       valueBox(value    = "--", 
-               subtitle = "Hits affter filters",
+               subtitle = "Hits after filters",
                color    = "red", 
                icon     = icon("bullseye"),
                width    = 2)
