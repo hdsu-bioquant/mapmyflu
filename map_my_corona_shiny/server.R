@@ -150,7 +150,9 @@ function(input, output, session) {
     blast_strn <- paste0("blastn -query ", my_path, " -task 'megablast' -db db/nucleotide/covid19 ")
     
     blast_stro <- paste0("-max_target_seqs ", input$blast_nres, " -evalue ", input$blast_evalt)
-    blast_strr <- " -outfmt 6 -num_threads 1 > data/SARScov2_alignment.tsv"
+    
+    aligntsv <- paste0(rand_fasta_name(1), "_alignment.tsv")
+    blast_strr <- paste0(" -outfmt 6 -num_threads 1 > ", aligntsv)
     
     if (input$seq_type == "nucleotide") {
       system(paste0(blast_strn, blast_stro, blast_strr), wait = TRUE)
@@ -163,7 +165,8 @@ function(input, output, session) {
     }
     
     # Check if results are empty
-    if (length(readLines("data/SARScov2_alignment.tsv")) == 0) {
+    if (length(readLines(aligntsv)) == 0) {
+    #if (length(readLines("data/SARScov2_alignment.tsv")) == 0) {
       sendSweetAlert(
         session = session,
         title = "No hits found",
@@ -177,7 +180,7 @@ function(input, output, session) {
       return(data.frame())
     } 
     
-    align <- read.delim("data/SARScov2_alignment.tsv", 
+    align <- read.delim(aligntsv, 
                         header=FALSE, stringsAsFactors = FALSE)
     colnames(align) <- c("qaccver", "Accession", "pident", "length", 
                          "mismatch", "gapopen", "qstart", "qend", "sstart", 
