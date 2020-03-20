@@ -73,9 +73,17 @@ function(input, output, session) {
       #-----------------------------------------------------------------#
       #                   Run from examples                             #
       #-----------------------------------------------------------------#
-        shiny::showNotification("Using default fasta sequence",
-                                duration = 5, closeButton = TRUE,
-                                type = "warning")
+        sendSweetAlert(
+          closeOnClickOutside = TRUE,
+          showCloseButton = FALSE, 
+          session = session,
+          title = "Using default fasta sequence",
+          text = "MT188340 results for nucleotide search or QHN73805 for protein search",
+          type = "info"
+        )
+        # shiny::showNotification("Using default fasta sequence",
+        #                         duration = 5, closeButton = TRUE,
+        #                         type = "warning")
         if (input$seq_type == "nucleotide") {
           my_path <- "testquery/SARScov2_query_nucleotide.fasta"
         } else {
@@ -172,7 +180,8 @@ function(input, output, session) {
       filter(!Geo_Location == "") %>% 
       filter(pident >= input$blast_pident_range[1] & pident <= input$blast_pident_range[2]) %>% 
       mutate(collection_months = substr(Collection_Date, 1, 7)) %>% 
-      mutate(evalue_log10 = -log10(evalue + 0.000001))
+      mutate(evalue_log10 = -log10(evalue + 1e-13))
+      #mutate(evalue_log10 = -log10(evalue + 0.000001))
     
   })
   
@@ -196,9 +205,12 @@ function(input, output, session) {
       
       x <- blaster_react() %>% 
         filter(!Geo_Location == "") %>% 
+        #mutate(x = !! sym(score_id)) %>%  
         mutate(radius = cut(!! sym(score_id), 4)) 
       radius_levels <- setNames(seq(2, 8, 2), levels(x$radius))
       
+      #print(x$x)
+      #print(radius_levels)
       
       #radius_levels <- setNames(seq(3, 12, 3), levels(blaster$radius))
       x <- x %>% 
@@ -208,6 +220,8 @@ function(input, output, session) {
         mutate(radiusfix = if_else(idx_location == 1 & sum(idx_location) > 1, 12, radius )) %>% 
         ungroup() %>% 
         mutate(radiusfix = factor(radiusfix, levels = sort(unique(radiusfix))))
+      
+      #print(x$radius)
       
       dots_pal <- colorFactor(c("grey20", "grey40", "grey60", "Tomato"), domain = levels(x$radius))
       #------------------------------------#
@@ -286,6 +300,115 @@ function(input, output, session) {
     
   })
   
+  #----------------------------------------------------------------------------#
+  #                           Filter Results                                   #
+  #----------------------------------------------------------------------------#
+  
+  fil_by_location <- function() {
+    if (length(input$sel_country) == 0) {
+      #input$sel_country
+      unique(blaster_react()$Geo_Location)
+    } else {
+      input$sel_country
+    }
+  }
+  
+  fil_by_collection_date <- function() {
+    if (length(input$date_range) == 0) {
+      #input$sel_country
+      c(min(blaster_react()$collection_months), max(blaster_react()$collection_months))
+    } else {
+      input$date_range
+    }
+  }
+  
+  fil_by_score_blastrf_pident <- function() {
+    if (length(input$blastrf_pident) == 0) {
+      c(min(blaster_react()$pident), max(blaster_react()$pident))
+    } else {
+      input$blastrf_pident
+    }
+  }
+  
+  fil_by_score_blastrf_evalue <- function() {
+    if (length(input$blastrf_evalue) == 0) {
+      c(min(blaster_react()$evalue), max(blaster_react()$evalue))
+    } else {
+      input$blastrf_evalue
+    }
+  }
+  
+  fil_by_score_blastrf_bitscore <- function() {
+    if (length(input$blastrf_pident) == 0) {
+      c(min(blaster_react()$bitscore), max(blaster_react()$bitscore))
+    } else {
+      input$blastrf_bitscore
+    }
+  }
+  
+  
+  blaster_filt <- reactiveVal()
+  
+  
+  
+  observeEvent({
+    #input$searchSequence
+    input$sel_country
+    input$date_range
+    input$blastrf_pident
+    input$blastrf_evalue
+    input$blastrf_bitscore
+  }, {
+    #print(fil_by_score_blastrf_pident())
+    #print(fil_by_score_blastrf_evalue())
+    #print(fil_by_score_blastrf_bitscore())
+    #print(dim(blaster_filt()))
+    x <- blaster_form_react()$df %>%
+      filter(Geo_Location %in% fil_by_location()) %>%
+      filter(collection_months >= fil_by_collection_date()[1] &
+               collection_months <= fil_by_collection_date()[2]) %>% 
+      # Filter by pident
+      filter(pident >= fil_by_score_blastrf_pident()[1] &
+               pident <= fil_by_score_blastrf_pident()[2]) %>% 
+      # Filter by evalue
+      filter(evalue <= fil_by_score_blastrf_evalue()[1] &
+               evalue >= fil_by_score_blastrf_evalue()[2]) %>%
+      # Filter by bitscore
+      filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
+               bitscore <= fil_by_score_blastrf_bitscore()[2])
+    blaster_filt(x)
+    
+  })
+  
+  # blaster_filt <- eventReactive({
+  #   input$searchSequence
+  #   input$sel_country
+  #   input$date_range
+  #   #input$blastrf_pident
+  #   #input$blastrf_evalue
+  #   #input$blastrf_bitscore
+  #   }, {
+  #     print(fil_by_score_blastrf_pident())
+  #     print(fil_by_score_blastrf_evalue())
+  #     print(fil_by_score_blastrf_bitscore())
+  #     
+  #     blaster_filt <- blaster_form_react()$df %>%
+  #       filter(Geo_Location %in% fil_by_location()) %>%
+  #       filter(collection_months >= fil_by_collection_date()[1] &
+  #                collection_months <= fil_by_collection_date()[2]) %>% 
+  #       # Filter by pident
+  #       filter(pident >= fil_by_score_blastrf_pident()[1] &
+  #                pident <= fil_by_score_blastrf_pident()[2]) %>% 
+  #       # Filter by evalue
+  #       filter(evalue <= fil_by_score_blastrf_evalue()[1] &
+  #                evalue >= fil_by_score_blastrf_evalue()[2]) %>%
+  #       # Filter by bitscore
+  #       filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
+  #                bitscore <= fil_by_score_blastrf_bitscore()[2])
+  #   
+  #     
+  #     
+  # })
   
   
   #----------------------------------------------------------------------------#
@@ -303,7 +426,6 @@ function(input, output, session) {
   
   # Date selector
   output$date_range <- renderUI({
-    
     collection_months <- sort(unique(blaster_react()$collection_months))
     
     if (length(collection_months) == 0 | is.null(collection_months)) {
@@ -329,7 +451,98 @@ function(input, output, session) {
   })
   
   
+  output$totalhits <- renderValueBox({
+    if (is.null(nrow(blaster_filt()))) {
+      valueBox(value    = "--",
+               subtitle = "Total hits",
+               color    = "orange",
+               icon     = icon("bullseye"),
+               width    = 2)
+    } else {
+      valueBox(value    = nrow(blaster_react()),
+               subtitle = "Total hits",
+               color    = "orange",
+               icon     = icon("bullseye"),
+               width    = 2)
+      
+    }
+    
+    
+  })
   
+  output$hitsafterfil <- renderValueBox({
+    if (is.null(nrow(blaster_filt()))) {
+      valueBox(value    = "--", 
+               subtitle = "Hits affter filters",
+               color    = "red", 
+               icon     = icon("bullseye"),
+               width    = 2)
+    } else {
+      valueBox(value    = nrow(blaster_filt()), 
+               subtitle = "Hits affter filters",
+               color    = "red", 
+               icon     = icon("bullseye"),
+               width    = 2)
+      
+    }
+    
+    
+  })
+  
+  #----------------------------------------------------------------------------#
+  #                      Reactive widgets filters scores                       #
+  #----------------------------------------------------------------------------#
+  output$blastrf_pident <- renderUI({
+    bounds <- c(min(blaster_react()$pident), max(blaster_react()$pident))
+    # print(blaster_react()$pident)
+    # print(bounds)
+    # print(signif(seq(bounds[1], bounds[2], length.out = 10), 3))
+    sliderTextInput(
+      inputId = "blastrf_pident",
+      label = "Percent identity (pident)", 
+      choices = unique(seq(bounds[1], bounds[2], length.out = 5)),
+      #choices = signif(seq(bounds[1], bounds[2], length.out = 10), 3),
+      selected = bounds,
+      from_min = bounds[1],
+      from_max =  bounds[2],
+      grid = TRUE
+    )
+  })
+  
+  output$blastrf_evalue <- renderUI({
+    bounds <- rev(c(min(blaster_react()$evalue), max(blaster_react()$evalue)))
+    #print(bounds)
+    sliderTextInput(
+      inputId = "blastrf_evalue",
+      label = "Expectation value (E)", 
+      choices = unique(seq(bounds[1], bounds[2], length.out = 5)),
+      #choices = signif(seq(bounds[1], bounds[2], length.out = 10), 3),
+      selected = bounds,
+      from_min = bounds[1],
+      from_max =  bounds[2],
+      grid = TRUE
+    )
+  })
+  
+  output$blastrf_bitscore <- renderUI({
+    bounds <- c(min(blaster_react()$bitscore), max(blaster_react()$bitscore))
+    #print(bounds)
+    sliderTextInput(
+      inputId = "blastrf_bitscore",
+      label = "bitscore", 
+      choices = unique(seq(bounds[1], bounds[2], length.out = 5)),
+      #choices = signif(seq(bounds[1], bounds[2], length.out = 10), 3),
+      selected = bounds,
+      from_min = bounds[1],
+      from_max =  bounds[2],
+      grid = TRUE
+    )
+  })
+  
+  
+  outputOptions(output, "blastrf_pident", suspendWhenHidden = FALSE)
+  outputOptions(output, "blastrf_evalue", suspendWhenHidden = FALSE)
+  outputOptions(output, "blastrf_bitscore", suspendWhenHidden = FALSE)
   #----------------------------------------------------------------------------#
   #                                       Map                                  #
   #----------------------------------------------------------------------------#
@@ -349,23 +562,7 @@ function(input, output, session) {
   #     addProviderTiles(providers$CartoDB.DarkMatter)
   # })
   
-  fil_by_location <- function() {
-    if (length(input$sel_country) == 0) {
-      #input$sel_country
-      unique(blaster_react()$Geo_Location)
-    } else {
-      input$sel_country
-    }
-  }
   
-  fil_by_collection_date <- function() {
-    if (length(input$date_range) == 0) {
-      #input$sel_country
-      c(min(blaster_react()$collection_months), max(blaster_react()$collection_months))
-    } else {
-      input$date_range
-    }
-  }
   #----------------------------------------------------------------------------#
   #                              Color areas                                   #
   #----------------------------------------------------------------------------#
@@ -459,7 +656,17 @@ function(input, output, session) {
       blaster_map <- blaster_form_react()$df %>%
         filter(Geo_Location %in% fil_by_location()) %>%
         filter(collection_months >= fil_by_collection_date()[1] &
-                 collection_months <= fil_by_collection_date()[2])
+                 collection_months <= fil_by_collection_date()[2]) %>% 
+        # Filter by pident
+        filter(pident >= fil_by_score_blastrf_pident()[1] &
+                 pident <= fil_by_score_blastrf_pident()[2]) %>% 
+        # Filter by evalue
+        filter(evalue <= fil_by_score_blastrf_evalue()[1] &
+                 evalue >= fil_by_score_blastrf_evalue()[2]) %>%
+        # Filter by bitscore
+        filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
+                 bitscore <= fil_by_score_blastrf_bitscore()[2])
+      
 
       dots_pal <- blaster_form_react()$dots_pal
       #dots_pal <- colorFactor(c("grey20", "grey40", "grey60", "Tomato"), domain = levels(blaster_map$radius))
@@ -522,6 +729,7 @@ function(input, output, session) {
                                             levels = sort(unique(collection_months)))) %>% 
           ggplot(aes(x = collection_months, fill = collection_months)) +
           geom_bar(stat = "count") +
+          scale_fill_viridis_d(option = "B", begin = 0.4, end = 0.8) +
           theme_dark() + 
           #scale_fill_tron()  +
           theme(#legend.position = "none",

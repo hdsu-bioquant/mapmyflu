@@ -223,23 +223,57 @@ dashboardPage(
         #icon = icon("bars"),
         icon = icon("cogs"),
         
-        awesomeRadio(
-          inputId = "score_id",
-          label = "Select score metric",
-          choices = c("Percent identity", "evalue", "bitscore"),
-          selected = "Percent identity",
+        uiOutput("sel_country"),
+        
+        menuItem(
+          "Coloring options",
+          tabName = "color_opt",
+          icon = icon("palette"),
+          
+          awesomeRadio(
+            inputId = "score_id",
+            label = "Select score metric to color individual hits",
+            choices = c("Percent identity", "evalue", "bitscore"),
+            selected = "Percent identity",
+          ),
+          
+          selectInput(
+            inputId  = "sel_area_col",
+            label    = "Color Area By:",
+            choices  = unname(color_area_IDs),
+            selected = unname(color_area_IDs)[1],
+            multiple = FALSE
+          ),
+          
+          tags$hr()
+          
         ),
         
         
-        selectInput(
-          inputId  = "sel_area_col",
-          label    = "Color Area By:",
-          choices  = unname(color_area_IDs),
-          selected = unname(color_area_IDs)[1],
-          multiple = FALSE
+        menuItem(
+          "Score filtering",
+          tabName = "score_filtering",
+          icon = icon("filter"),
+          
+          
+          
+          uiOutput("blastrf_pident"),
+          uiOutput("blastrf_evalue"),
+          uiOutput("blastrf_bitscore")
+          
         )
         
+        #tags$hr()
+        # selectInput(
+        #   inputId  = "sel_area_col",
+        #   label    = "Color Area By:",
+        #   choices  = unname(color_area_IDs),
+        #   selected = unname(color_area_IDs)[1],
+        #   multiple = FALSE
+        # )
       ),
+      
+      tags$hr(),
       
       menuItem(
         "FAQ",
@@ -293,15 +327,28 @@ dashboardPage(
           
         ),
         
-        fluidRow(
-          tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;}"),
-          box(
-            #height = 300,
-            width = 12,
-            leafletOutput("empty_map"),
-            "Empty box"
-          )
-        )
+        #tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;}"),
+        #leafletOutput("empty_map", height = 200),
+        # box(
+        #   height = 200,
+        #   width = 12,
+        #   #leafletOutput("empty_map"),
+        #   leafletOutput("empty_map", height = 200),
+        #   
+        #   "Empty box"
+        # )
+        
+        # fluidRow(
+        #   tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;}"),
+        #   box(
+        #     height = 200,
+        #     width = 12,
+        #     #leafletOutput("empty_map"),
+        #     leafletOutput("empty_map", height = 200),
+        #     
+        #     "Empty box"
+        #   )
+        # )
       ),
 
       tabItem(
@@ -348,21 +395,27 @@ dashboardPage(
             
           ),
 
-          box(
-            height = 100,
-            width = 4,
-            background = "black",
-            # Input: Selector for choosing Regulatory Variance metric ----
-            uiOutput("sel_country")
-          )
-
+          # box(
+          #   height = 100,
+          #   width = 4,
+          #   background = "black",
+          #   # Input: Selector for choosing Regulatory Variance metric ----
+          #   "Placeholder"
+          #   #uiOutput("sel_country")
+          # ),
+          
+          # Dynamic valueBoxes
+          valueBoxOutput("totalhits", width = 2),
+          
+          valueBoxOutput("hitsafterfil", width = 2)
+          
         ),
 
         fluidRow(
           
-          tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;}"),
+          #tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;}"),
+          tags$style(type = "text/css", "#map {height: calc(80vh - 80px) !important;}"),
           box(
-            #height = 300,
             width = 12,
             leafletOutput("map")
           )
@@ -383,164 +436,5 @@ dashboardPage(
   skin = "black"
 )
 
-
-
-# 
-# dashboardPage(
-#   
-#   dashboardHeader(title = "Map my Corona"),
-#   #----------------------------------------------------------------------------#
-#   #                                Sidebar                                     #
-#   #----------------------------------------------------------------------------#
-#   dashboardSidebar(
-#     
-#     sidebarMenu(
-#       
-#       menuItem(
-#         "Map", 
-#         tabName = "maps", 
-#         icon = icon("globe")
-#       ),
-#       
-#       menuItem(
-#         "Data explorer", 
-#         tabName = "dataexplore", 
-#         icon = icon("bar-chart")
-#       ),
-#       
-#       # Horizontal line ----
-#       tags$hr(),
-#       h4("Search sequence", align = "center"),
-#       h6("from Fasta or from search box", align = "center"),
-#       
-#       # Input: Select a file ----
-#       fileInput("file1", "Choose Fasta File",
-#                 multiple = FALSE,
-#                 accept = c(".RDS", ".fa", ".fasta")),
-#       
-#       # Search fasta sequence
-#       textAreaInput("stringSequence", "Search sequence...", "> my_corona\natatataaccddf"),
-#       
-#       actionBttn(
-#         inputId = "searchSequence",
-#         label = "Submit",
-#         style = "jelly", 
-#         size  = "sm",
-#         color = "danger"
-#       ),
-#       h6("Click Submit without any input", align = "center"),
-#       h6("to display results for MT188340", align = "center"),
-#       
-#       
-#       br(),
-#       tags$hr(),
-#       h4("Options", align = "center"),
-#       #h6("from Fasta or from search box", align = "center"),
-#       
-#       awesomeRadio(
-#         inputId = "score_id",
-#         label = "Select score metric", 
-#         choices = c("Percent identity", "evalue", "bitscore"),
-#         selected = "Percent identity",
-#       ),
-#       
-#       
-#       selectInput(
-#         inputId  = "sel_area_col",
-#         label    = "Color Area By:",
-#         choices  = unname(color_area_IDs),
-#         selected = unname(color_area_IDs)[1],
-#         multiple = FALSE
-#       )
-#       
-#       
-#     )
-#   ),
-#   
-#   #----------------------------------------------------------------------------#
-#   #                              dashboardBody                                 #
-#   #----------------------------------------------------------------------------#
-#   dashboardBody(
-#     useShinyjs(),
-#     tabItems(
-#       
-#       
-#       tabItem(
-#         tabName = "maps",
-#         fluidRow(
-#           box(
-#             height = 100, 
-#             width = 4, 
-#             background = "black",
-#             plotOutput(outputId = "gg_data_months")
-#           ),
-#           
-#           box(
-#             height = 100, 
-#             width = 4, 
-#             background = "black",
-#             uiOutput("date_range")
-#           ),
-#           
-#           box(
-#             height = 100,
-#             width = 4, 
-#             background = "black",
-#             # Input: Selector for choosing Regulatory Variance metric ----
-#             uiOutput("sel_country")
-#           )
-#           
-#         ),
-#         
-#         fluidRow(
-#           tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;}"),
-#           box(
-#             #height = 300,
-#             width = 12, 
-#             leafletOutput("map")
-#           )
-#         )
-#       ),
-#       
-#       tabItem(
-#         tabName = "dataexplore",
-#         
-#         fluidRow(
-#           box(
-#             height = 100, 
-#             width = 4, 
-#             background = "black",
-#             plotOutput(outputId = "gg_data_months")
-#           ),
-#           
-#           box(
-#             height = 100, 
-#             width = 4, 
-#             background = "black",
-#             uiOutput("date_range")
-#           ),
-#           
-#           box(
-#             height = 100,
-#             width = 4, 
-#             background = "black",
-#             # Input: Selector for choosing Regulatory Variance metric ----
-#             uiOutput("sel_country")
-#           )
-#           
-#         ),
-#         fluidRow(
-#           div(style = 'overflow-x: scroll', 
-#               #DT::DTOutput("blaster"))
-#               #checkboxInput("dt_sel", "sel/desel all")
-#               DT::dataTableOutput('blaster_ui'))
-#         )
-#         
-#       )
-#       
-#     )
-#   ), 
-#   skin = "black"
-# )
 
 
