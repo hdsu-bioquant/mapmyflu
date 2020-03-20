@@ -461,8 +461,9 @@ dashboardPage(
         div(style = 'overflow-x: scroll',
             #DT::DTOutput("blaster"))
             #checkboxInput("dt_sel", "sel/desel all")
-            DT::dataTableOutput('blaster_ui'))
+            DT::dataTableOutput('blaster_ui')),
         #DT::dataTableOutput("blaster")
+        downloadButton('downloadBlaster', 'Download')
       )
 
     )

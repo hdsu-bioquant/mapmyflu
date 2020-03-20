@@ -740,6 +740,34 @@ function(input, output, session) {
   })
   
   
+  # downloadHandler() takes two arguments, both functions.
+  # The content function is passed a filename as an argument, and
+  #   it should write out data to that filename.
+  output$downloadBlaster <- downloadHandler(
+    
+    # This function returns a string which tells the client
+    # browser what name to use when saving the file.
+    filename = function() {
+      "SARScov2_alignment.tsv"
+    },
+    
+    # This function should write data to a file given to it by
+    # the argument 'file'.
+    content = function(file) {
+      # sep <- switch(input$filetype, "csv" = ",", "tsv" = "\t")
+      
+      # Write to a file specified by the 'file' argument
+      write.table(blaster_filt(), file, sep = "\t",
+                  row.names = FALSE)
+    }
+  )
+  
+  
+  
+  
+  ##--------------------------------------------------------------------------##
+  ##                       Barplot of hits per month                          ##
+  ##--------------------------------------------------------------------------##
   
   
   observe(
