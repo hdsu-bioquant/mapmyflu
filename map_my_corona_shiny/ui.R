@@ -322,7 +322,7 @@ dashboardPage(
           
           box(
             title = "BLAST Options", width = NULL, background = "light-blue",
-            "A box with a solid light-blue background"
+            "..."
           )
           
         ),
