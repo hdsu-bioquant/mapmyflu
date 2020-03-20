@@ -594,6 +594,17 @@ function(input, output, session) {
         filter(Geo_Location %in% fil_by_location()) %>%
         filter(collection_months >= fil_by_collection_date()[1] &
                  collection_months <= fil_by_collection_date()[2]) %>%
+        # Filter by pident
+        filter(pident >= fil_by_score_blastrf_pident()[1] &
+                 pident <= fil_by_score_blastrf_pident()[2]) %>% 
+        # Filter by evalue
+        filter(evalue <= fil_by_score_blastrf_evalue()[1] &
+                 evalue >= fil_by_score_blastrf_evalue()[2]) %>%
+        # Filter by bitscore
+        filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
+                 bitscore <= fil_by_score_blastrf_bitscore()[2]) %>% 
+        
+        
         mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
                                           paste0(Collection_Date, "-32"),
                                           Collection_Date)) %>%
@@ -705,29 +716,15 @@ function(input, output, session) {
 
   
   
-  # 
-  # ## Data Explorer ###########################################
   ##--------------------------------------------------------------------------##
   ##              Get main table and fitler according to options              ##
   ##--------------------------------------------------------------------------##
+  ### Data Explorer ###########################################
   
   output$blaster_ui <- DT::renderDataTable({
     
-    df <- blaster_form_react()$df %>% 
+    df <- blaster_filt() %>% 
       mutate(Release_Date = as.Date.character(Release_Date)) %>%
-      filter(collection_months >= fil_by_collection_date()[1] &
-               collection_months <= fil_by_collection_date()[2]) %>% 
-      
-      # Filter by pident
-      filter(pident >= fil_by_score_blastrf_pident()[1] &
-               pident <= fil_by_score_blastrf_pident()[2]) %>% 
-      # Filter by evalue
-      filter(evalue <= fil_by_score_blastrf_evalue()[1] &
-               evalue >= fil_by_score_blastrf_evalue()[2]) %>%
-      # Filter by bitscore
-      filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
-               bitscore <= fil_by_score_blastrf_bitscore()[2]) %>% 
-      
       select(Accession, pident, evalue, bitscore, Geo_Location, Host,
              Release_Date, Collection_Date, length, mismatch, gapopen,
              qstart, qend, sstart, send, Length, Isolation_Source, Species) %>% 
@@ -775,19 +772,7 @@ function(input, output, session) {
       output$gg_data_months <- renderPlot({
         
         # Input data is filtered 
-        blaster_form_react()$df %>% 
-          filter(Geo_Location %in% fil_by_location()) %>% 
-          filter(collection_months >= fil_by_collection_date()[1] &
-                   collection_months <= fil_by_collection_date()[2]) %>% 
-          # Filter by pident
-          filter(pident >= fil_by_score_blastrf_pident()[1] &
-                   pident <= fil_by_score_blastrf_pident()[2]) %>% 
-          # Filter by evalue
-          filter(evalue <= fil_by_score_blastrf_evalue()[1] &
-                   evalue >= fil_by_score_blastrf_evalue()[2]) %>%
-          # Filter by bitscore
-          filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
-                   bitscore <= fil_by_score_blastrf_bitscore()[2]) %>% 
+        blaster_filt() %>% 
           
           mutate(collection_months = factor(collection_months, 
                                             levels = sort(unique(collection_months)))) %>% 
