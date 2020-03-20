@@ -49,7 +49,9 @@ function(input, output, session) {
       #             Run from fasta sequence in box                      #
       #-----------------------------------------------------------------#
       if (input$stringSequence != "> my_corona") {
-        my_path <- "data/inline.fasta"
+        
+        #my_path <- "data/inline.fasta"
+        my_path <- rand_fasta_name(1)
         writeLines(input$stringSequence, my_path)
         fast_val <- validate_fasta(my_path, input$seq_type)
         
@@ -482,7 +484,7 @@ function(input, output, session) {
                width    = 2)
     } else {
       valueBox(value    = nrow(blaster_filt()), 
-               subtitle = "Hits affter filters",
+               subtitle = "Hits after filters",
                color    = "red", 
                icon     = icon("bullseye"),
                width    = 2)

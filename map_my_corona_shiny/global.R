@@ -13,6 +13,12 @@ color_area_IDs <- c(col_collect = "Collection date of top hit in each country",
                     col_release = "Release date of top hit in each country",
                     none        = "none")
 
+rand_fasta_name <- function(n = 5000) {
+  a <- do.call(paste0, replicate(5, sample(LETTERS, n, TRUE), FALSE))
+  #print(a)
+  fa_id <- paste0(a, sprintf("%04d", sample(9999, n, TRUE)), sample(LETTERS, n, TRUE))
+  paste0("data/", fa_id, ".fasta")
+}
 
 
 validate_fasta <- function(path_fa, type){
