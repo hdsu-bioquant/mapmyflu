@@ -56,7 +56,7 @@ dashboardPage(
     #   tabName = "faq",
     #   icon = icon("question-circle")
     # ),
-
+    
     sidebarMenu(
       br(),
       h6("MapMyCorona is a blast-server", align = "center"),
@@ -155,7 +155,7 @@ dashboardPage(
         tabName = "maps",
         icon = icon("globe")
       ),
-
+      
       menuItem(
         "Data explorer",
         tabName = "dataexplore",
@@ -219,18 +219,18 @@ dashboardPage(
         #icon = icon("user-secret")
         icon = icon("question-circle")
       ),
-
+      
       
       #br(),
       tags$hr()
-
+      
       # h4("Options", align = "center"),
       # h5("Placeh", align = "center")
       #h6("from Fasta or from search box", align = "center"),
       
     )
   ),
-
+  
   #----------------------------------------------------------------------------#
   #                              dashboardBody                                 #
   #----------------------------------------------------------------------------#
@@ -309,7 +309,7 @@ dashboardPage(
             p("A nucleotide or protein BLAST is run using 
               as query the uploaded sequence or a specified
               sequence in the search box.",
-               align = "center"),
+              align = "center"),
             
             h4(icon("cog"), align = "center"),
             h4("BLAST Options", align = "center"),
@@ -409,7 +409,7 @@ dashboardPage(
           )
         ) 
       ),
-
+      
       tabItem(
         tabName = "maps",
         fluidRow(
@@ -420,7 +420,7 @@ dashboardPage(
             background = "black",
             plotOutput(outputId = "gg_data_months")
           ),
-
+          
           box(
             height = 100,
             width = 4,
@@ -429,7 +429,7 @@ dashboardPage(
             
             
           ),
-
+          
           # box(
           #   height = 100,
           #   width = 4,
@@ -445,7 +445,7 @@ dashboardPage(
           valueBoxOutput("hitsafterfil", width = 2)
           
         ),
-
+        
         fluidRow(
           
           #tags$style(type = "text/css", "#map {height: calc(100vh - 80px) !important;}"),
@@ -456,7 +456,7 @@ dashboardPage(
           )
         )
       ),
-
+      
       tabItem(
         tabName = "dataexplore",
         div(style = 'overflow-x: scroll',
@@ -466,7 +466,7 @@ dashboardPage(
         #DT::dataTableOutput("blaster")
         downloadButton('downloadBlaster', 'Download')
       )
-
+      
     )
   ),
   skin = "black"

@@ -2,19 +2,10 @@ library(leaflet)
 library(RColorBrewer)
 library(scales)
 library(ggplot2)
-#library(lattice)
 library(dplyr)
 library(shinyjs)
-#library(ggsci)
 
-# library(reticulate)
-# conda_list()
-# use_condaenv("blast")
-# py_config()
-# system("blastn -help ", wait = T)
-# system("conda list ", wait = T)
-# system("which python ", wait = T)
-# system("which blastn ", wait = T)
+
 
 function(input, output, session) {
   #----------------------------------------------------------------------------#
@@ -50,7 +41,6 @@ function(input, output, session) {
       #-----------------------------------------------------------------#
       if (input$stringSequence != "> my_corona") {
         
-        #my_path <- "data/inline.fasta"
         my_path <- rand_fasta_name(1)
         writeLines(input$stringSequence, my_path)
         fast_val <- validate_fasta(my_path, input$seq_type)
@@ -65,19 +55,13 @@ function(input, output, session) {
             text = "please check if the sequence contains header and is of the correct type",
             type = "error"
           )
-          
-          # shiny::showNotification("Invalid sequence\n 
-          #                       please check if the sequence contains header\n 
-          #                       and is of the correct type ",
-          #                         duration = 10, closeButton = TRUE,
-          #                         type = "error")
           return(data.frame())
         }
         
       } else {
-      #-----------------------------------------------------------------#
-      #                   Run from examples                             #
-      #-----------------------------------------------------------------#
+        #-----------------------------------------------------------------#
+        #                   Run from examples                             #
+        #-----------------------------------------------------------------#
         sendSweetAlert(
           closeOnClickOutside = TRUE,
           showCloseButton = FALSE, 
@@ -86,9 +70,7 @@ function(input, output, session) {
           text = "MT188340 results for nucleotide search or QHN73805 for protein search",
           type = "info"
         )
-        # shiny::showNotification("Using default fasta sequence",
-        #                         duration = 5, closeButton = TRUE,
-        #                         type = "warning")
+        
         if (input$seq_type == "nucleotide") {
           my_path <- "testquery/SARScov2_query_nucleotide.fasta"
         } else {
@@ -110,6 +92,7 @@ function(input, output, session) {
       } 
       
       my_path <- input$file1$datapath
+      
       if (input$seq_type == "nucleotide") {
         fast_val <- validate_fasta(my_path, "nucleotide")
       } else {
@@ -123,11 +106,6 @@ function(input, output, session) {
           text = "please check if the sequence contains header and is of the correct type",
           type = "error"
         )
-        # shiny::showNotification("Invalid sequence\n 
-        #                         please check if the sequence contains header\n 
-        #                         and is of the correct type ",
-        #                         duration = 10, closeButton = TRUE,
-        #                         type = "error")
         return(data.frame())
       }
       
@@ -140,63 +118,80 @@ function(input, output, session) {
     
     
     #--------------------------------------------------------------------------#
-    #                                     Run BLAST                            #
+    #                               Run BLAST                                  #
     #--------------------------------------------------------------------------#
-    print(my_path)
+    #print(my_path)
+    # Blast optioms
+    blast_stro <- paste0("-max_target_seqs ", input$blast_nres, 
+                         " -evalue ", input$blast_evalt,
+                         " -outfmt 6 -num_threads 1 ")
     
-    #my_path <- "testquery/SARScov2_query_nucleotide.fasta"
-    # Run Blast
-    blast_strp <- paste0("blastp -query ", my_path, " -task 'blastp' -db db/protein/covid19 ")
-    blast_strn <- paste0("blastn -query ", my_path, " -task 'megablast' -db db/nucleotide/covid19 ")
-    
-    blast_stro <- paste0("-max_target_seqs ", input$blast_nres, " -evalue ", input$blast_evalt)
-    
-    aligntsv <- paste0(rand_fasta_name(1), "_alignment.tsv")
-    blast_strr <- paste0(" -outfmt 6 -num_threads 1 > ", aligntsv)
-    
-    if (input$seq_type == "nucleotide") {
-      system(paste0(blast_strn, blast_stro, blast_strr), wait = TRUE)
-      anno_query <- read.csv("data/SARScov2_nucleotide_metadata.csv",
-                             header=TRUE, stringsAsFactors = FALSE)
+    if (Sys.info()["sysname"] == "Darwin") {
+      if (input$seq_type == "nucleotide") {
+        # Blast command
+        blast_strn <- paste0("bin/binm/blastn -query ", my_path, " -task megablast -db db/nucleotide/covid19 ")
+        # Run Blast
+        align <- system(paste0(blast_strn, blast_stro), intern = TRUE)
+        anno_query <- read.csv("data/SARScov2_nucleotide_metadata.csv",
+                               header=TRUE, stringsAsFactors = FALSE)
+      } else {
+        # Blast command
+        blast_strp <- paste0("bin/binm/blastp -query ", my_path, " -task blastp -db db/protein/covid19 ")
+        # Run Blast
+        align <- system(paste0(blast_strp, blast_stro), intern = TRUE)
+        anno_query <- read.csv("data/SARScov2_protein_metadata.csv",
+                               header=TRUE, stringsAsFactors = FALSE)
+      }
     } else {
-      system(paste0(blast_strp, blast_stro, blast_strr), wait = TRUE)
-      anno_query <- read.csv("data/SARScov2_protein_metadata.csv",
-                             header=TRUE, stringsAsFactors = FALSE)
+      if (input$seq_type == "nucleotide") {
+        # Blast command
+        blast_strn <- paste0("bin/blastn -query ", my_path, " -task megablast -db db/nucleotide/covid19 ")
+        # Run Blast
+        align <- system(paste0(blast_strn, blast_stro), intern = TRUE)
+        anno_query <- read.csv("data/SARScov2_nucleotide_metadata.csv",
+                               header=TRUE, stringsAsFactors = FALSE)
+      } else {
+        # Blast command
+        blast_strp <- paste0("bin/blastp -query ", my_path, " -task blastp -db db/protein/covid19 ")
+        # Run Blast
+        align <- system(paste0(blast_strp, blast_stro), intern = TRUE)
+        anno_query <- read.csv("data/SARScov2_protein_metadata.csv",
+                               header=TRUE, stringsAsFactors = FALSE)
+      }
     }
     
+    #--------------------------------------------------------------------------#
+    #                               BLAST results                              #
+    #--------------------------------------------------------------------------#
+    
     # Check if results are empty
-    if (length(readLines(aligntsv)) == 0) {
-    #if (length(readLines("data/SARScov2_alignment.tsv")) == 0) {
+    if (length(align) == 0) {
       sendSweetAlert(
         session = session,
         title = "No hits found",
         text = "Please check if sequence is of the correct type and Blast options",
         type = "error"
       )
-      # shiny::showNotification("No hits found, 
-      #                           please check if sequence is of the correct type",
-      #                         duration = 10, closeButton = TRUE,
-      #                         type = "error")
       return(data.frame())
     } 
     
-    align <- read.delim(aligntsv, 
-                        header=FALSE, stringsAsFactors = FALSE)
+    # Create table from alignmet result, merge with metada and sort
+    align <- do.call("rbind", strsplit(align, "\t"))
     colnames(align) <- c("qaccver", "Accession", "pident", "length", 
                          "mismatch", "gapopen", "qstart", "qend", "sstart", 
                          "send", "evalue", "bitscore")
-    
-    
-    align <- merge(align, anno_query, by = "Accession")
-    align <- align[order(align$pident, - align$evalue, align$bitscore, 
-                         decreasing = TRUE),]
-    print(dim(align))
-    align %>% 
+    align <- as_tibble(align) %>% 
+      mutate_at(c("pident", "length", "mismatch", "gapopen", "qstart", "qend", 
+                  "sstart", "send", "evalue", "bitscore"), as.numeric) %>% 
+      left_join(anno_query, by = "Accession") %>% 
+      arrange(desc(pident), evalue, desc(bitscore)) %>% 
       filter(!Geo_Location == "") %>% 
       filter(pident >= input$blast_pident_range[1] & pident <= input$blast_pident_range[2]) %>% 
       mutate(collection_months = substr(Collection_Date, 1, 7)) %>% 
       mutate(evalue_log10 = -log10(evalue + 1e-13))
-      #mutate(evalue_log10 = -log10(evalue + 0.000001))
+    
+    #print(dim(align))
+    
     
   })
   
@@ -563,7 +558,7 @@ function(input, output, session) {
   #----------------------------------------------------------------------------#
   
   ## Interactive Map ###########################################
-
+  
   # Create the map
   output$map <- renderLeaflet({
     leaflet() %>%
@@ -581,13 +576,13 @@ function(input, output, session) {
   #----------------------------------------------------------------------------#
   #                              Color areas                                   #
   #----------------------------------------------------------------------------#
-
+  
   observe({
     #print(input$date_range)
     if (nrow(blaster_react()) > 0 & 
         !is.null(blaster_form_react()) #&
         #input$date_range[1] != 0  & input$date_range[2] != 0 
-        ) {
+    ) {
       # print(blaster_form_react()$df)
       #print(blaster_form_react()$my_countries@data)
       blaster_summ <- blaster_form_react()$df %>%
@@ -619,18 +614,18 @@ function(input, output, session) {
         mutate(cums = 1) %>%
         mutate(cums = cumsum(cums)) %>%
         filter(cums == 1)
-
+      
       
       
       countries_react <- blaster_form_react()$my_countries[blaster_form_react()$my_countries$blast_id %in% blaster_summ$Geo_Location,]
       colID <- names(color_area_IDs)[color_area_IDs %in% input$sel_area_col]
-
+      
       #print(countries_react@data)
       
       if (colID == "none") {
         blaster_summ <- blaster_summ %>%
           mutate(area_col = "")
-
+        
         leafletProxy("map", data = blaster_summ) %>%
           clearControls() %>%
           clearShapes()
@@ -647,7 +642,7 @@ function(input, output, session) {
         
         #print(countries_react@data)
         pal <- colorFactor("YlOrRd", domain = sort(unique(countries_react$density)))
-
+        
         
         leafletProxy("map", data = blaster_summ) %>%
           clearControls() %>%
@@ -670,13 +665,13 @@ function(input, output, session) {
         clearMarkerClusters() %>%
         clearMarkers()
     }
-
+    
   }, priority = 5)
-
+  
   #----------------------------------------------------------------------------#
   #                              Add clusters                                  #
   #----------------------------------------------------------------------------#
-
+  
   observe({
     if (nrow(blaster_react()) > 0 & !is.null(blaster_form_react())) {
       blaster_map <- blaster_form_react()$df %>%
@@ -693,11 +688,11 @@ function(input, output, session) {
         filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
                  bitscore <= fil_by_score_blastrf_bitscore()[2])
       
-
+      
       dots_pal <- blaster_form_react()$dots_pal
       #dots_pal <- colorFactor(c("grey20", "grey40", "grey60", "Tomato"), domain = levels(blaster_map$radius))
       #print(as.data.frame(blaster_map[is.na(blaster_map$latitude),]))
-
+      
       leafletProxy("map", data = blaster_map) %>%
         clearMarkerClusters() %>%
         clearMarkers() %>%
@@ -711,9 +706,9 @@ function(input, output, session) {
                          popup = blaster_map$dots_lab,
                          fillOpacity = 1)
     }
-
+    
   }, priority = 1)
-
+  
   
   
   ##--------------------------------------------------------------------------##
@@ -729,8 +724,8 @@ function(input, output, session) {
              Release_Date, Collection_Date, length, mismatch, gapopen,
              qstart, qend, sstart, send, Length, Isolation_Source, Species) %>% 
       filter(Geo_Location %in% fil_by_location()) 
-      
-      
+    
+    
     action <- DT::dataTableAjax(session, df, outputId = "blaster_ui")
     
     DT::datatable(df, options = list(ajax = list(url = action)), escape = FALSE, class = "nowrap display")
@@ -768,7 +763,7 @@ function(input, output, session) {
   
   
   observe(
-    if (nrow(blaster_react()) > 0 & !is.null(blaster_form_react()) ) {
+    if (nrow(blaster_react()) > 0 & !is.null(blaster_form_react()) & !is.null(blaster_filt()) ) {
       output$gg_data_months <- renderPlot({
         
         # Input data is filtered 

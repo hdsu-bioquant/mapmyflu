@@ -1,5 +1,8 @@
 library(dplyr)
 library(leaflet)
+
+
+Sys.chmod(c("bin/blastn", "bin/blastp"), mode = "0771")
 #------------------------------------------------------------------------------#
 #           read data - Country Polygons GeoJSON as sp                         #
 #------------------------------------------------------------------------------#
@@ -13,12 +16,23 @@ color_area_IDs <- c(col_collect = "Collection date of top hit in each country",
                     col_release = "Release date of top hit in each country",
                     none        = "none")
 
-rand_fasta_name <- function(n = 5000) {
+rand_fasta_name <- function(n = 1) {
   a <- do.call(paste0, replicate(5, sample(LETTERS, n, TRUE), FALSE))
-  #print(a)
   fa_id <- paste0(a, sprintf("%04d", sample(9999, n, TRUE)), sample(LETTERS, n, TRUE))
-  paste0("data/", fa_id, ".fasta")
+  paste0("testquery/q",as.numeric(Sys.Date()), fa_id, ".fasta")
 }
+
+
+# readSimFasta <- function(path_fa){
+#   x <- readLines(path_fa)
+#   # Simplified headers
+#   headers_idx <- which(substr(x, 1, 1) == ">")
+#   headers <- x[headers_idx]
+#   headers <- sapply(strsplit(headers, " "), "[[", 1)
+#   x[headers_idx] <- headers
+#   x
+# }
+
 
 
 validate_fasta <- function(path_fa, type){
