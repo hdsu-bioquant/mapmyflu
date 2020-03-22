@@ -718,6 +718,7 @@ function(input, output, session) {
   ### Data Explorer ###########################################
   
   output$blaster_ui <- DT::renderDataTable({
+    req(blaster_filt())
     
     df <- blaster_filt() %>% 
       mutate(Release_Date = as.Date.character(Release_Date)) %>%
