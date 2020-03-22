@@ -39,7 +39,7 @@ function(input, output, session) {
       #-----------------------------------------------------------------#
       #             Run from fasta sequence in box                      #
       #-----------------------------------------------------------------#
-      if (input$stringSequence != "> my_corona") {
+      if (input$stringSequence != "") {
         
         my_path <- rand_fasta_name(1)
         writeLines(input$stringSequence, my_path)
@@ -85,7 +85,7 @@ function(input, output, session) {
       clearstatus$loaded <- TRUE
       reset("file1")
       
-      if (input$stringSequence != "> my_corona") {
+      if (input$stringSequence != "") {
         shiny::showNotification("Text box is not empty, but will use uploaded fasta file",
                                 duration = 5, closeButton = TRUE,
                                 type = "error")
@@ -201,7 +201,8 @@ function(input, output, session) {
   #-----------------------------------------------------------------#
   blaster_form_react <- eventReactive({
     input$score_id
-    input$searchSequence
+    blaster_react()
+    #input$searchSequence
   }, {
     
     if (nrow(blaster_react()) > 0 ) {
@@ -761,68 +762,34 @@ function(input, output, session) {
   ##                       Barplot of hits per month                          ##
   ##--------------------------------------------------------------------------##
   
-  
-  observe(
-    if (nrow(blaster_react()) > 0 & !is.null(blaster_form_react()) & !is.null(blaster_filt()) ) {
-      output$gg_data_months <- renderPlot({
+  output$gg_data_months <- renderPlot({
+    req(blaster_filt())
+    # Input data is filtered hits table
+    blaster_filt() %>% 
+      mutate(collection_months = factor(collection_months, 
+                                        levels = sort(unique(collection_months)))) %>% 
+      ggplot(aes(x = collection_months, fill = collection_months)) +
+      geom_bar(stat = "count") +
+      scale_fill_viridis_d(option = "B", begin = 0.4, end = 0.8) +
+      theme_dark() + 
+      #scale_fill_tron()  +
+      theme(#legend.position = "none",
+        text = element_text(colour = "white"),
+        axis.text.x = element_text(colour = "white"),
+        axis.text.y = element_text(colour = "white"),
+        plot.background =element_rect(fill = "#2D2D2D"),
+        panel.background = element_rect(fill = "#2D2D2D"),
+        axis.line=element_blank(),
         
-        # Input data is filtered 
-        blaster_filt() %>% 
-          
-          mutate(collection_months = factor(collection_months, 
-                                            levels = sort(unique(collection_months)))) %>% 
-          ggplot(aes(x = collection_months, fill = collection_months)) +
-          geom_bar(stat = "count") +
-          scale_fill_viridis_d(option = "B", begin = 0.4, end = 0.8) +
-          theme_dark() + 
-          #scale_fill_tron()  +
-          theme(#legend.position = "none",
-            text = element_text(colour = "white"),
-            axis.text.x = element_text(colour = "white"),
-            axis.text.y = element_text(colour = "white"),
-            plot.background =element_rect(fill = "#2D2D2D"),
-            panel.background = element_rect(fill = "#2D2D2D"),
-            axis.line=element_blank(),
-            
-            axis.ticks=element_blank(),
-            axis.title.x=element_blank(),
-            #axis.title.y=element_blank(),
-            panel.grid = element_blank(),
-            legend.position="none") 
-      },
-      #width  = 100, 
-      height = 80
-      )
-    } else {
-      # Placeholder in case of error
-      output$gg_data_months <- renderPlot({
-        data.frame() %>%
-          ggplot() +
-          #geom_bar(stat = "count") +
-          theme_dark() + 
-          theme(
-            line  = element_blank(),
-            rect  = element_blank(), 
-            title = element_blank(),
-            text  = element_blank(), 
-            #plot.background = element_blank(), 
-            #panel.background = element_blank(), 
-            plot.background =element_rect(fill = "black"),
-            panel.background = element_rect(fill = "black"), 
-            panel.border = element_blank(), 
-            panel.grid = element_blank(),
-            legend.position="none") 
-      },
-      height = 80
-      )
-      
-      
-    }
-    
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        #axis.title.y=element_blank(),
+        panel.grid = element_blank(),
+        legend.position="none") 
+  },
+  #width  = 100, 
+  height = 80
   )
-  
-  
-  
   
   
 }

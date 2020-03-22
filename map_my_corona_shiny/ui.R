@@ -81,7 +81,11 @@ dashboardPage(
                   accept = c(".RDS", ".fa", ".fasta")),
         
         # Search fasta sequence
-        textAreaInput("stringSequence", "Search sequence...", "> my_corona"),
+        textAreaInput(
+          inputId = "stringSequence", 
+          label   = "Search sequence...", 
+          placeholder = "> my_corona"
+        ),
         actionBttn(
           inputId = "clear_stringSequence",
           label = "Clear", 
