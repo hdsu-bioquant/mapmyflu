@@ -121,7 +121,23 @@ function(input, output, session) {
     #--------------------------------------------------------------------------#
     #                               Run BLAST                                  #
     #--------------------------------------------------------------------------#
-    #print(my_path)
+    shinyWidgets:::toastSweetAlert(
+      session = session,
+      position = "center",
+      #animation = FALSE,
+      timer = 3000,
+      title = "Blasting the sequence...",
+      text = "Please wait while we blast your sequence to the database",
+      type = "info"
+    )
+    
+    # sendSweetAlert(
+    #   session = session,
+    #   title = "Blasting the sequence...",
+    #   text = "Please wait while we blast your seqeunce to the database",
+    #   type = "info"
+    # )
+    
     # Blast optioms
     blast_stro <- paste0("-max_target_seqs ", input$blast_nres, 
                          " -evalue ", input$blast_evalt,
@@ -161,6 +177,7 @@ function(input, output, session) {
       }
     }
     
+    
     #--------------------------------------------------------------------------#
     #                               BLAST results                              #
     #--------------------------------------------------------------------------#
@@ -195,6 +212,16 @@ function(input, output, session) {
     
     
   })
+  
+  # observeEvent(blaster_react(), {
+  #   # p2 <- proc.time() - p1 
+  #   Sys.sleep(3)
+  #   # # Close notification Blast alert
+  #   closeSweetAlert(session)
+  # })
+  # #eventReactive()
+  
+  
   
   
   #-----------------------------------------------------------------#
@@ -592,8 +619,7 @@ function(input, output, session) {
     #print(blaster_form_react()$df)
     if (!is.null(blaster_form_react()) ) {
     #if (!is.null(blaster_react()) ) {
-       print(blaster_form_react()$df)
-      
+      print(blaster_form_react()$df)
       print(fil_by_location())
       print(fil_by_collection_date())
       print(fil_by_score_blastrf_pident())
@@ -632,41 +658,9 @@ function(input, output, session) {
         filter(cums == 1)
       
       
-      print(summary(blaster_form_react()$df$evalue))
       
-      # print(blaster_form_react()$df %>%
-      #   filter(Geo_Location %in% fil_by_location()) %>%
-      #   filter(collection_months >= fil_by_collection_date()[1] &
-      #            collection_months <= fil_by_collection_date()[2]) %>%
-      #   # Filter by pident
-      #   filter(pident >= fil_by_score_blastrf_pident()[1] &
-      #            pident <= fil_by_score_blastrf_pident()[2]) %>%
-      #   # Filter by evalue
-      #   filter(evalue >= fil_by_score_blastrf_evalue()[1] &
-      #            evalue <= fil_by_score_blastrf_evalue()[2]) %>%
-      #   # Filter by bitscore
-      #   filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
-      #            bitscore <= fil_by_score_blastrf_bitscore()[2]) %>%
-      # 
-      #   mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
-      #                                     paste0(Collection_Date, "-32"),
-      #                                     Collection_Date)) %>%
-      #   # for each country keep only the top hit
-      #   group_by(Geo_Location) %>%
-      #   top_n(n = 1, pident) %>%
-      #   top_n(n = 1, -evalue) %>%
-      #   top_n(n = 1, bitscore) %>%
-      #   top_n(n = -1, Collection_Date2) %>%
-      #   top_n(n = -1, Release_Date) %>%
-      #   # If there's more than one entry keep only the first one
-      #   mutate(cums = 1) %>%
-      #   mutate(cums = cumsum(cums)) %>%
-      #   filter(cums == 1) %>% 
-      #   mutate(pl = 1)
-      # )
-      # 
       
-      #print(blaster_summ)
+      
       
       countries_react <- blaster_form_react()$my_countries[blaster_form_react()$my_countries$blast_id %in% blaster_summ$Geo_Location,]
       colID <- names(color_area_IDs)[color_area_IDs %in% input$sel_area_col]
@@ -758,6 +752,7 @@ function(input, output, session) {
                          popup = blaster_map$dots_lab,
                          fillOpacity = 1)
     }
+    
     
   }, priority = 1)
   
