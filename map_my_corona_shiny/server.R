@@ -383,8 +383,8 @@ function(input, output, session) {
       filter(pident >= fil_by_score_blastrf_pident()[1] &
                pident <= fil_by_score_blastrf_pident()[2]) %>% 
       # Filter by evalue
-      filter(evalue <= fil_by_score_blastrf_evalue()[1] &
-               evalue >= fil_by_score_blastrf_evalue()[2]) %>%
+      filter(evalue >= fil_by_score_blastrf_evalue()[1] &
+               evalue <= fil_by_score_blastrf_evalue()[2]) %>%
       # Filter by bitscore
       filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
                bitscore <= fil_by_score_blastrf_bitscore()[2])
@@ -526,7 +526,7 @@ function(input, output, session) {
   output$blastrf_evalue <- renderUI({
     req(blaster_react())
     
-    bounds <- rev(c(min(blaster_react()$evalue), max(blaster_react()$evalue)))
+    bounds <- c(min(blaster_react()$evalue), max(blaster_react()$evalue))
     #print(bounds)
     sliderTextInput(
       inputId = "blastrf_evalue",
@@ -589,9 +589,17 @@ function(input, output, session) {
     #req()
     #print(input$date_range)
     #print(blaster_react())
-    #print(is.null(blaster_form_react()))
-    if (!is.null(blaster_react()) ) {
-      # print(blaster_form_react()$df)
+    #print(blaster_form_react()$df)
+    if (!is.null(blaster_form_react()) ) {
+    #if (!is.null(blaster_react()) ) {
+       print(blaster_form_react()$df)
+      
+      print(fil_by_location())
+      print(fil_by_collection_date())
+      print(fil_by_score_blastrf_pident())
+      print(fil_by_score_blastrf_evalue())
+      print(fil_by_score_blastrf_bitscore())
+      
       #print(blaster_form_react()$my_countries@data)
       blaster_summ <- blaster_form_react()$df %>%
         filter(Geo_Location %in% fil_by_location()) %>%
@@ -601,8 +609,8 @@ function(input, output, session) {
         filter(pident >= fil_by_score_blastrf_pident()[1] &
                  pident <= fil_by_score_blastrf_pident()[2]) %>% 
         # Filter by evalue
-        filter(evalue <= fil_by_score_blastrf_evalue()[1] &
-                 evalue >= fil_by_score_blastrf_evalue()[2]) %>%
+        filter(evalue >= fil_by_score_blastrf_evalue()[1] &
+                 evalue <= fil_by_score_blastrf_evalue()[2]) %>%
         # Filter by bitscore
         filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
                  bitscore <= fil_by_score_blastrf_bitscore()[2]) %>% 
@@ -624,6 +632,41 @@ function(input, output, session) {
         filter(cums == 1)
       
       
+      print(summary(blaster_form_react()$df$evalue))
+      
+      # print(blaster_form_react()$df %>%
+      #   filter(Geo_Location %in% fil_by_location()) %>%
+      #   filter(collection_months >= fil_by_collection_date()[1] &
+      #            collection_months <= fil_by_collection_date()[2]) %>%
+      #   # Filter by pident
+      #   filter(pident >= fil_by_score_blastrf_pident()[1] &
+      #            pident <= fil_by_score_blastrf_pident()[2]) %>%
+      #   # Filter by evalue
+      #   filter(evalue >= fil_by_score_blastrf_evalue()[1] &
+      #            evalue <= fil_by_score_blastrf_evalue()[2]) %>%
+      #   # Filter by bitscore
+      #   filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
+      #            bitscore <= fil_by_score_blastrf_bitscore()[2]) %>%
+      # 
+      #   mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
+      #                                     paste0(Collection_Date, "-32"),
+      #                                     Collection_Date)) %>%
+      #   # for each country keep only the top hit
+      #   group_by(Geo_Location) %>%
+      #   top_n(n = 1, pident) %>%
+      #   top_n(n = 1, -evalue) %>%
+      #   top_n(n = 1, bitscore) %>%
+      #   top_n(n = -1, Collection_Date2) %>%
+      #   top_n(n = -1, Release_Date) %>%
+      #   # If there's more than one entry keep only the first one
+      #   mutate(cums = 1) %>%
+      #   mutate(cums = cumsum(cums)) %>%
+      #   filter(cums == 1) %>% 
+      #   mutate(pl = 1)
+      # )
+      # 
+      
+      #print(blaster_summ)
       
       countries_react <- blaster_form_react()$my_countries[blaster_form_react()$my_countries$blast_id %in% blaster_summ$Geo_Location,]
       colID <- names(color_area_IDs)[color_area_IDs %in% input$sel_area_col]
@@ -667,7 +710,6 @@ function(input, output, session) {
                     position = "topright")
       }
     } else {
-      print(blaster_react())
       
       leafletProxy("map") %>%
         clearControls() %>%
@@ -692,8 +734,8 @@ function(input, output, session) {
         filter(pident >= fil_by_score_blastrf_pident()[1] &
                  pident <= fil_by_score_blastrf_pident()[2]) %>% 
         # Filter by evalue
-        filter(evalue <= fil_by_score_blastrf_evalue()[1] &
-                 evalue >= fil_by_score_blastrf_evalue()[2]) %>%
+        filter(evalue >= fil_by_score_blastrf_evalue()[1] &
+                 evalue <= fil_by_score_blastrf_evalue()[2]) %>%
         # Filter by bitscore
         filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
                  bitscore <= fil_by_score_blastrf_bitscore()[2])
