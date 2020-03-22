@@ -55,7 +55,8 @@ function(input, output, session) {
             text = "please check if the sequence contains header and is of the correct type",
             type = "error"
           )
-          return(data.frame())
+          return(NULL)
+          #return(data.frame())
         }
         
       } else {
@@ -504,6 +505,8 @@ function(input, output, session) {
   #                      Reactive widgets filters scores                       #
   #----------------------------------------------------------------------------#
   output$blastrf_pident <- renderUI({
+    req(blaster_react())
+    
     bounds <- c(min(blaster_react()$pident), max(blaster_react()$pident))
     # print(blaster_react()$pident)
     # print(bounds)
@@ -521,6 +524,8 @@ function(input, output, session) {
   })
   
   output$blastrf_evalue <- renderUI({
+    req(blaster_react())
+    
     bounds <- rev(c(min(blaster_react()$evalue), max(blaster_react()$evalue)))
     #print(bounds)
     sliderTextInput(
@@ -536,6 +541,8 @@ function(input, output, session) {
   })
   
   output$blastrf_bitscore <- renderUI({
+    req(blaster_react())
+    
     bounds <- c(min(blaster_react()$bitscore), max(blaster_react()$bitscore))
     #print(bounds)
     sliderTextInput(
@@ -580,10 +587,9 @@ function(input, output, session) {
   
   observe({
     #print(input$date_range)
-    if (nrow(blaster_react()) > 0 & 
-        !is.null(blaster_form_react()) #&
-        #input$date_range[1] != 0  & input$date_range[2] != 0 
-    ) {
+    #print(blaster_react())
+    #print(is.null(blaster_form_react()))
+    if (!is.null(blaster_react()) ) {
       # print(blaster_form_react()$df)
       #print(blaster_form_react()$my_countries@data)
       blaster_summ <- blaster_form_react()$df %>%
@@ -660,6 +666,8 @@ function(input, output, session) {
                     position = "topright")
       }
     } else {
+      print(blaster_react())
+      
       leafletProxy("map") %>%
         clearControls() %>%
         clearShapes() %>%
@@ -710,7 +718,43 @@ function(input, output, session) {
     
   }, priority = 1)
   
-  
+  # observe({
+  #   if (nrow(blaster_react()) > 0 & !is.null(blaster_form_react())) {
+  #     blaster_map <- blaster_form_react()$df %>%
+  #       filter(Geo_Location %in% fil_by_location()) %>%
+  #       filter(collection_months >= fil_by_collection_date()[1] &
+  #                collection_months <= fil_by_collection_date()[2]) %>% 
+  #       # Filter by pident
+  #       filter(pident >= fil_by_score_blastrf_pident()[1] &
+  #                pident <= fil_by_score_blastrf_pident()[2]) %>% 
+  #       # Filter by evalue
+  #       filter(evalue <= fil_by_score_blastrf_evalue()[1] &
+  #                evalue >= fil_by_score_blastrf_evalue()[2]) %>%
+  #       # Filter by bitscore
+  #       filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
+  #                bitscore <= fil_by_score_blastrf_bitscore()[2])
+  #     
+  #     
+  #     dots_pal <- blaster_form_react()$dots_pal
+  #     #dots_pal <- colorFactor(c("grey20", "grey40", "grey60", "Tomato"), domain = levels(blaster_map$radius))
+  #     #print(as.data.frame(blaster_map[is.na(blaster_map$latitude),]))
+  #     
+  #     leafletProxy("map", data = blaster_map) %>%
+  #       clearMarkerClusters() %>%
+  #       clearMarkers() %>%
+  #       addCircleMarkers(lng = blaster_map$longitude,
+  #                        lat = blaster_map$latitude,
+  #                        radius = blaster_map$radiusfix,
+  #                        color = ~dots_pal(blaster_map$radius),
+  #                        clusterOptions = markerClusterOptions(
+  #                          spiderfyDistanceMultiplier=1.2
+  #                        ),
+  #                        popup = blaster_map$dots_lab,
+  #                        fillOpacity = 1)
+  #   }
+  #   
+  # }, priority = 1)
+  # 
   
   ##--------------------------------------------------------------------------##
   ##              Get main table and fitler according to options              ##
