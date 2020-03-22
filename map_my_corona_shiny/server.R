@@ -173,7 +173,7 @@ function(input, output, session) {
         text = "Please check if sequence is of the correct type and Blast options",
         type = "error"
       )
-      return(data.frame())
+      return(NULL)
     } 
     
     # Create table from alignmet result, merge with metada and sort
@@ -586,6 +586,7 @@ function(input, output, session) {
   #----------------------------------------------------------------------------#
   
   observe({
+    #req()
     #print(input$date_range)
     #print(blaster_react())
     #print(is.null(blaster_form_react()))
