@@ -364,8 +364,8 @@ function(input, output, session) {
     x$longitude <- my_countries$longitude[idx]
     x$latitude <- my_countries$latitude[idx]
     
-    # print(colnames(x))
-    # print(head(x))
+    print(colnames(x))
+    print(as.data.frame(head(x)))
     x$dots_lab <- paste(sep = "<br/>",
                         paste0("<b><a href='https://www.ncbi.nlm.nih.gov/nuccore/", 
                                x$Accession, 
@@ -376,10 +376,11 @@ function(input, output, session) {
                         paste0("Host : ", x$Host),
                         paste0("Geo Location : ", x$Geo_Location),
                         paste0("Collection Date : ", x$Collection_Date),
-                        paste0("Release Date : ", x$Release_Date),
+                        paste0("Release Date : ", as.Date(x$Release_Date)),
                         paste0("percent identity = ", x$pident),
                         paste0("evalue = ", x$evalue),
-                        paste0("bitscore = ", x$bitscore)
+                        paste0("bitscore = ", x$bitscore),
+                        paste0("Definition = ", x$GenBank_Title)
     ) 
     #print(my_countries@data)
     
