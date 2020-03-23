@@ -11,8 +11,10 @@ dashboardPage(
   #----------------------------------------------------------------------------#
   dashboardHeader(
     #title = "Map my Corona",
-    title = tags$a(href="https://www.hdsu.org/", target="_blank",
+    title = tags$a(href=".", target="_blank",
                    tags$img(src="map_my_corona_logo.png",height="50px")),
+    # title = tags$a(href="https://www.hdsu.org/", target="_blank",
+    #                tags$img(src="map_my_corona_logo.png",height="50px")),
     
     tags$li(class = "dropdown",
             tags$a(href="https://www.hdsu.org/", target="_blank",
