@@ -48,6 +48,7 @@ function(input, output, session) {
   #   clean_start()$map
   #   #print(clean_start())
   blaster_react <- eventReactive(input$searchSequence, {
+    demoseq <- FALSE
     #blaster_filt(NULL)
     new_run(TRUE)
     # if true will run demo or text from box
@@ -55,6 +56,7 @@ function(input, output, session) {
       #-----------------------------------------------------------------#
       #             Run from fasta sequence in box                      #
       #-----------------------------------------------------------------#
+      
       if (input$stringSequence != "") {
         
         my_path <- rand_fasta_name(1)
@@ -72,13 +74,13 @@ function(input, output, session) {
             type = "error"
           )
           return(NULL)
-          #return(data.frame())
         }
         
       } else {
         #-----------------------------------------------------------------#
         #                   Run from examples                             #
         #-----------------------------------------------------------------#
+        demoseq <- TRUE
         sendSweetAlert(
           closeOnClickOutside = TRUE,
           showCloseButton = FALSE, 
@@ -123,7 +125,7 @@ function(input, output, session) {
           text = "please check if the sequence contains header and is of the correct type",
           type = "error"
         )
-        return(data.frame())
+        return(NULL)
       }
       
       
@@ -137,15 +139,18 @@ function(input, output, session) {
     #--------------------------------------------------------------------------#
     #                               Run BLAST                                  #
     #--------------------------------------------------------------------------#
-    shinyWidgets:::toastSweetAlert(
-      session = session,
-      position = "center",
-      #animation = FALSE,
-      timer = 3000,
-      title = "Blasting the sequence...",
-      text = "Please wait while we blast your sequence to the database",
-      type = "info"
-    )
+    if (!demoseq) {
+      shinyWidgets:::toastSweetAlert(
+        session = session,
+        position = "center",
+        #animation = FALSE,
+        timer = 3000,
+        title = "Blasting the sequence...",
+        text = "Please wait while we blast your sequence to the database",
+        type = "info"
+      )
+    }
+    
     
     # sendSweetAlert(
     #   session = session,
@@ -224,20 +229,8 @@ function(input, output, session) {
       mutate(collection_months = substr(Collection_Date, 1, 7)) %>% 
       mutate(evalue_log10 = -log10(evalue + 1e-13))
     
-    #print(dim(align))
-    
     
   })
-  
-  # observeEvent(blaster_react(), {
-  #   # p2 <- proc.time() - p1 
-  #   Sys.sleep(3)
-  #   # # Close notification Blast alert
-  #   closeSweetAlert(session)
-  # })
-  # #eventReactive()
-  
-  
   
   
   #-----------------------------------------------------------------#
@@ -251,7 +244,6 @@ function(input, output, session) {
   }, {
     
     req(blaster_react())
-    #print("jghghghghg")
     
     
     score_ids <- c(pident = "Percent identity",
@@ -259,16 +251,12 @@ function(input, output, session) {
                    bitscore = "bitscore")
     score_id <- names(score_ids)[score_ids %in% input$score_id]
     
-    #print(blaster_react())
-    
     x <- blaster_react() %>% 
       filter(!Geo_Location == "") %>% 
       #mutate(x = !! sym(score_id)) %>%  
       mutate(radius = cut(!! sym(score_id), 4)) 
     radius_levels <- setNames(seq(2, 8, 2), levels(x$radius))
     
-    #print(x$x)
-    #print(radius_levels)
     
     #radius_levels <- setNames(seq(3, 12, 3), levels(blaster$radius))
     x <- x %>% 
@@ -304,12 +292,10 @@ function(input, output, session) {
     # keep only countries in the blast results
     my_countries <- countries[country_mapper$mapper,]
     my_countries$blast_id <- country_mapper$blast_id_orig
-    
     #print(country_mapper)
     
     
     # Add color by date
-    
     x <- x %>% 
       # Fix collection date color
       mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
@@ -403,11 +389,8 @@ function(input, output, session) {
   }
   
   
-  
-  
   observeEvent({
     #blaster_form_react
-    #input$searchSequence
     input$sel_country
     input$date_range
     input$blastrf_pident
@@ -417,9 +400,9 @@ function(input, output, session) {
     #print(fil_by_score_blastrf_pident())
     #print(fil_by_score_blastrf_evalue())
     #print(dim(blaster_filt()))
-    print("filter")
-    print(c("bitscore: ", fil_by_score_blastrf_bitscore()))
-    print(dim(blaster_form_react$df))
+    # print("filter")
+    # print(c("bitscore: ", fil_by_score_blastrf_bitscore()))
+    # print(dim(blaster_form_react$df))
     x <- blaster_form_react$df %>%
       filter(Geo_Location %in% fil_by_location()) %>%
       filter(collection_months >= fil_by_collection_date()[1] &
@@ -437,36 +420,6 @@ function(input, output, session) {
     blaster_filt(x)
     
   }, priority = 40)
-  
-  # blaster_filt <- eventReactive({
-  #   input$searchSequence
-  #   input$sel_country
-  #   input$date_range
-  #   #input$blastrf_pident
-  #   #input$blastrf_evalue
-  #   #input$blastrf_bitscore
-  #   }, {
-  #     print(fil_by_score_blastrf_pident())
-  #     print(fil_by_score_blastrf_evalue())
-  #     print(fil_by_score_blastrf_bitscore())
-  #     
-  #     blaster_filt <- blaster_form_react$df %>%
-  #       filter(Geo_Location %in% fil_by_location()) %>%
-  #       filter(collection_months >= fil_by_collection_date()[1] &
-  #                collection_months <= fil_by_collection_date()[2]) %>% 
-  #       # Filter by pident
-  #       filter(pident >= fil_by_score_blastrf_pident()[1] &
-  #                pident <= fil_by_score_blastrf_pident()[2]) %>% 
-  #       # Filter by evalue
-  #       filter(evalue <= fil_by_score_blastrf_evalue()[1] &
-  #                evalue >= fil_by_score_blastrf_evalue()[2]) %>%
-  #       # Filter by bitscore
-  #       filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
-  #                bitscore <= fil_by_score_blastrf_bitscore()[2])
-  #   
-  #     
-  #     
-  # })
   
   
   #----------------------------------------------------------------------------#
@@ -631,14 +584,13 @@ function(input, output, session) {
   #                              Color areas                                   #
   #----------------------------------------------------------------------------#
   observeEvent(blaster_filt(), {
-    print("map area")
-    print(dim(blaster_filt()))
+    # print("map area")
+    # print(dim(blaster_filt()))
     if (!is.null(blaster_filt()) ) {
       
       
       
       req(blaster_filt())
-      #print(blaster_form_react$my_countries@data)
       
       blaster_summ <- blaster_filt() %>%
       mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
@@ -717,8 +669,8 @@ function(input, output, session) {
   
   observeEvent(blaster_filt(), {
     if (!is.null(blaster_filt())) {
-      print("map clusters")
-      print(dim(blaster_filt()))
+      # print("map clusters")
+      # print(dim(blaster_filt()))
       
       blaster_map <- blaster_filt() 
       dots_pal <- blaster_form_react$dots_pal
