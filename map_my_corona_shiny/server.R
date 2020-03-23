@@ -20,14 +20,15 @@ function(input, output, session) {
   #   text = "Click the submit button without any input if you want to try our demo sequences",
   #   type = "info"
   # )
-  
+  #shinyjs::hide(selector = "ul.menu-open")
   sendSweetAlert(
     session = session,
     title = "Welcome to MapMyCorona",
     text = "Click the submit button without any input if you want to try our demo sequences",
     type = "success"
   )
-  
+  toggle(id = "searchseq", anim = TRUE, animType = "slide",
+              time = 1.5, selector = NULL, asis = FALSE)
   
   # save raw BLAST results
   blaster_react <- reactiveVal()
@@ -193,8 +194,12 @@ function(input, output, session) {
     }
     reset("file1")
     reset("stringSequence")
-    shinyjs::hide(selector = "ul.menu-open")
-    
+    #shinyjs::hide(selector = "ul.menu-open", anim = TRUE, time = 1.5)
+    hide(id = "searchseq", anim = TRUE, animType = "slide",
+           time = 1.5, selector = NULL, asis = FALSE)
+    toggle(id = "viz_options", anim = TRUE, animType = "slide",
+           time = 1.5, selector = NULL, asis = FALSE)
+    #shinyjs::hide(selector = "ul.menu-open")
     
     #--------------------------------------------------------------------------#
     #                               Run BLAST                                  #
@@ -493,6 +498,31 @@ function(input, output, session) {
   #----------------------------------------------------------------------------#
   #                           Reactive widgets                                 #
   #----------------------------------------------------------------------------#
+  # Turn on/off country color
+  observeEvent(input$countrycol_switch, {
+    if (input$countrycol_switch) {
+      updatePickerInput(
+        session,
+        inputId  = "sel_area_col",
+        label    = "Color Area By:",
+        choices  = unname(color_area_IDs),
+        selected = unname(color_area_IDs)[1]
+      )
+    } else {
+      updatePickerInput(
+        session,
+        inputId  = "sel_area_col",
+        label    = "Color Area By:",
+        choices  = unname(color_area_IDs),
+        selected = unname(color_area_IDs)[3]
+      )
+    }
+    
+    
+    
+  })
+  
+  
   # Country selector
   output$sel_country <- renderUI({
     selectInput(

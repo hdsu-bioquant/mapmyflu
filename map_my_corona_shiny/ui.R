@@ -73,9 +73,10 @@ dashboardPage(
       
       menuItem(
         "Search ...",
+        id = "searchseq",
         tabName = "searchseq",
         icon = icon("search"),
-        startExpanded = TRUE,
+        startExpanded = FALSE,
         
         # Input: Select a file ----
         fileInput("file1", "Choose Fasta File",
@@ -171,9 +172,27 @@ dashboardPage(
       
       menuItem(
         "Options",
+        id = "viz_options",
         tabName = "options",
         #icon = icon("bars"),
         icon = icon("cogs"),
+        
+        # switchInput(
+        #   inputId = "countrycol_switch2",
+        #   label   = "Color country area",
+        #   value   = FALSE,
+        #   onStatus = "success", 
+        #   offStatus = "danger"
+        # ),
+        
+        materialSwitch(
+          inputId = "countrycol_switch",
+          label = tags$b("Color country area"), 
+          value = FALSE,
+          #width = "50%",
+          status = "success"
+        ),
+        
         
         uiOutput("sel_country"),
         
@@ -189,13 +208,21 @@ dashboardPage(
             selected = "Percent identity",
           ),
           
-          selectInput(
+          pickerInput(
             inputId  = "sel_area_col",
             label    = "Color Area By:",
             choices  = unname(color_area_IDs),
             selected = unname(color_area_IDs)[3],
             multiple = FALSE
           ),
+          
+          # selectInput(
+          #   inputId  = "sel_area_col",
+          #   label    = "Color Area By:",
+          #   choices  = unname(color_area_IDs),
+          #   selected = unname(color_area_IDs)[3],
+          #   multiple = FALSE
+          # ),
           
           tags$hr()
           
@@ -435,12 +462,31 @@ dashboardPage(
             plotOutput(outputId = "gg_data_months")
           ),
           
+          # box(
+          #   height = 100,
+          #   width = 1,
+          #   background = "black",
+          #   
+          #   h6("Color country area", align = "center"),
+          #   prettyToggle(inputId = "toggle1",
+          #                label_on = "Checked!",
+          #                label_off = "Unchecked...",
+          #                inline = TRUE),
+          #   
+          #   materialSwitch(
+          #     inputId = "countrycol_switch",
+          #     #label = "Color country area", 
+          #     value = FALSE,
+          #     width = "50%",
+          #     status = "success"
+          #   )
+          # ),
+          
           box(
             height = 100,
             width = 4,
             background = "black",
-            uiOutput("date_range"),
-            
+            uiOutput("date_range") 
             
           ),
           
