@@ -191,7 +191,7 @@ dashboardPage(
             inputId  = "sel_area_col",
             label    = "Color Area By:",
             choices  = unname(color_area_IDs),
-            selected = unname(color_area_IDs)[3],
+            selected = unname(color_area_IDs)[1],
             multiple = FALSE
           ),
           
@@ -422,6 +422,8 @@ dashboardPage(
             height = 100,
             width = 4,
             background = "black",
+            # addSpinner(plotOutput(outputId = "gg_data_months"),
+            #            spin = "circle", color = "#E41A1C")
             plotOutput(outputId = "gg_data_months")
           ),
           
@@ -444,6 +446,9 @@ dashboardPage(
           # ),
           
           # Dynamic valueBoxes
+          # addSpinner(valueBoxOutput("totalhits", width = 2),
+          #            spin = "circle", color = "#E41A1C"),
+          
           valueBoxOutput("totalhits", width = 2),
           
           valueBoxOutput("hitsafterfil", width = 2)

@@ -15,6 +15,9 @@ function(input, output, session) {
   #-----------------------------------------------------------------#
   #                            read BLAST result                    #
   #-----------------------------------------------------------------#
+  # Reactive tibble to store blast results
+  blaster_filt <- reactiveVal()
+  
   clearstatus <- reactiveValues(loaded = TRUE, clear = TRUE)
   observeEvent(input$file1, {
     clearstatus$clear <- FALSE
@@ -27,13 +30,26 @@ function(input, output, session) {
     
   }, priority = 1000)
   
-  fasta_checker <- function() {
-    
-  }
   
+  # # Clean start
+  # clean_start <- eventReactive(input$searchSequence, {
+  #   blaster_filt(NULL)
+  #   
+  #   # Start with clean map
+  #   leafletProxy("map") %>%
+  #     clearControls() %>%
+  #     clearShapes() %>%
+  #     clearMarkerClusters() %>%
+  #     clearMarkers()
+  # })
+  new_run <- reactiveVal(FALSE)
+  
+  # blaster_react <- eventReactive(clean_start(), {
+  #   clean_start()$map
+  #   #print(clean_start())
   blaster_react <- eventReactive(input$searchSequence, {
-    
-    
+    #blaster_filt(NULL)
+    new_run(TRUE)
     # if true will run demo or text from box
     if( clearstatus$loaded & clearstatus$clear ){
       #-----------------------------------------------------------------#
@@ -227,117 +243,118 @@ function(input, output, session) {
   #-----------------------------------------------------------------#
   #                        format BLAST result                      #
   #-----------------------------------------------------------------#
-  blaster_form_react <- eventReactive({
+  blaster_form_react <- reactiveValues(df = NULL)
+  
+  observeEvent({
     input$score_id
     blaster_react()
-    #input$searchSequence
   }, {
     
-    if (nrow(blaster_react()) > 0 ) {
-      
-      score_ids <- c(pident = "Percent identity",
-                     evalue_log10 = "evalue",
-                     bitscore = "bitscore")
-      score_id <- names(score_ids)[score_ids %in% input$score_id]
-      
-      #print(blaster_react())
-      
-      x <- blaster_react() %>% 
-        filter(!Geo_Location == "") %>% 
-        #mutate(x = !! sym(score_id)) %>%  
-        mutate(radius = cut(!! sym(score_id), 4)) 
-      radius_levels <- setNames(seq(2, 8, 2), levels(x$radius))
-      
-      #print(x$x)
-      #print(radius_levels)
-      
-      #radius_levels <- setNames(seq(3, 12, 3), levels(blaster$radius))
-      x <- x %>% 
-        mutate(radius = recode(radius, !!!radius_levels)) %>% 
-        group_by(Geo_Location) %>% 
-        mutate(idx_location = 1:n()) %>% 
-        mutate(radiusfix = if_else(idx_location == 1 & sum(idx_location) > 1, 12, radius )) %>% 
-        ungroup() %>% 
-        mutate(radiusfix = factor(radiusfix, levels = sort(unique(radiusfix))))
-      
-      #print(x$radius)
-      
-      dots_pal <- colorFactor(c("grey20", "grey40", "grey60", "Tomato"), domain = levels(x$radius))
-      #------------------------------------#
-      #         Country mapper to sp       #
-      #------------------------------------#
-      #countries
-      simp_id <- function(x){
-        gsub(" ", "", tolower(x))
-      }
-      
-      # Country mapper
-      country_mapper <- data.frame(blast_id_orig = unique(x$Geo_Location),
-                                   blast_id = simp_id(unique(x$Geo_Location)), 
-                                   stringsAsFactors = FALSE) %>% 
-        mutate(ADMIN  = match(blast_id, simp_id(countries$ADMIN))) %>% 
-        mutate(ISO_A3 = match(blast_id, simp_id(countries$ISO_A3))) %>% 
-        mutate(mapper = if_else(!is.na(ADMIN), ADMIN, ISO_A3)) %>% 
-        filter(!is.na(mapper))
-      
-      
-      
-      # keep only countries in the blast results
-      my_countries <- countries[country_mapper$mapper,]
-      my_countries$blast_id <- country_mapper$blast_id_orig
-      
-      #print(country_mapper)
-      
-      
-      # Add color by date
-      
-      x <- x %>% 
-        # Fix collection date color
-        mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
-                                          paste0(Collection_Date, "-32"),
-                                          Collection_Date)) %>% 
-        mutate(fixdate = as.Date(gsub("32$", "15", Collection_Date2)))%>%
-        mutate(fixdate2 = cut.Date(fixdate, 6, labels = FALSE)) %>%
-        mutate(fixdate3 = cut.Date(fixdate, 6)) %>%
-        mutate(col_collect = sort(unique(as.character(fixdate3)))[fixdate2]) %>% 
-        # Fix Release date color
-        mutate(fixdate = as.Date(Release_Date))%>%
-        mutate(fixdate2 = cut.Date(fixdate, 6, labels = FALSE)) %>%
-        mutate(fixdate3 = cut.Date(fixdate, 6)) %>%
-        mutate(col_release = sort(unique(as.character(fixdate3)))[fixdate2]) 
-      
-      #------------------------------------#
-      #     Ad coordinates to blaster      #
-      #------------------------------------#
-      #countries$blast_id
-      idx <- match(x$Geo_Location, my_countries$blast_id)
-      x$longitude <- my_countries$longitude[idx]
-      x$latitude <- my_countries$latitude[idx]
-      
-      #print(head(x))
-      x$dots_lab <- paste(sep = "<br/>",
-                          paste0("<b><a href='https://www.ncbi.nlm.nih.gov/nuccore/", 
-                                 x$Accession, 
-                                 "'>", 
-                                 x$Accession, 
-                                 "</a></b>"),
-                          paste0("Host : ", x$Host),
-                          paste0("Geo Location : ", x$Geo_Location),
-                          paste0("Collection Date : ", x$Collection_Date),
-                          paste0("Release Date : ", x$Release_Date),
-                          paste0("percent identity = ", x$pident),
-                          paste0("evalue = ", x$evalue),
-                          paste0("bitscore = ", x$bitscore)
-      ) 
-      #print(my_countries@data)
-      list(df           = x,
-           my_countries = my_countries,
-           dots_pal     = dots_pal)
-    } else {
-      NULL
+    req(blaster_react())
+    #print("jghghghghg")
+    
+    
+    score_ids <- c(pident = "Percent identity",
+                   evalue_log10 = "evalue",
+                   bitscore = "bitscore")
+    score_id <- names(score_ids)[score_ids %in% input$score_id]
+    
+    #print(blaster_react())
+    
+    x <- blaster_react() %>% 
+      filter(!Geo_Location == "") %>% 
+      #mutate(x = !! sym(score_id)) %>%  
+      mutate(radius = cut(!! sym(score_id), 4)) 
+    radius_levels <- setNames(seq(2, 8, 2), levels(x$radius))
+    
+    #print(x$x)
+    #print(radius_levels)
+    
+    #radius_levels <- setNames(seq(3, 12, 3), levels(blaster$radius))
+    x <- x %>% 
+      mutate(radius = recode(radius, !!!radius_levels)) %>% 
+      group_by(Geo_Location) %>% 
+      mutate(idx_location = 1:n()) %>% 
+      mutate(radiusfix = if_else(idx_location == 1 & sum(idx_location) > 1, 12, radius )) %>% 
+      ungroup() %>% 
+      mutate(radiusfix = factor(radiusfix, levels = sort(unique(radiusfix))))
+    
+    #print(x$radius)
+    
+    dots_pal <- colorFactor(c("grey20", "grey40", "grey60", "Tomato"), domain = levels(x$radius))
+    #------------------------------------#
+    #         Country mapper to sp       #
+    #------------------------------------#
+    #countries
+    simp_id <- function(x){
+      gsub(" ", "", tolower(x))
     }
     
-  })
+    # Country mapper
+    country_mapper <- data.frame(blast_id_orig = unique(x$Geo_Location),
+                                 blast_id = simp_id(unique(x$Geo_Location)), 
+                                 stringsAsFactors = FALSE) %>% 
+      mutate(ADMIN  = match(blast_id, simp_id(countries$ADMIN))) %>% 
+      mutate(ISO_A3 = match(blast_id, simp_id(countries$ISO_A3))) %>% 
+      mutate(mapper = if_else(!is.na(ADMIN), ADMIN, ISO_A3)) %>% 
+      filter(!is.na(mapper))
+    
+    
+    
+    # keep only countries in the blast results
+    my_countries <- countries[country_mapper$mapper,]
+    my_countries$blast_id <- country_mapper$blast_id_orig
+    
+    #print(country_mapper)
+    
+    
+    # Add color by date
+    
+    x <- x %>% 
+      # Fix collection date color
+      mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
+                                        paste0(Collection_Date, "-32"),
+                                        Collection_Date)) %>% 
+      mutate(fixdate = as.Date(gsub("32$", "15", Collection_Date2)))%>%
+      mutate(fixdate2 = cut.Date(fixdate, 6, labels = FALSE)) %>%
+      mutate(fixdate3 = cut.Date(fixdate, 6)) %>%
+      mutate(col_collect = sort(unique(as.character(fixdate3)))[fixdate2]) %>% 
+      # Fix Release date color
+      mutate(fixdate = as.Date(Release_Date))%>%
+      mutate(fixdate2 = cut.Date(fixdate, 6, labels = FALSE)) %>%
+      mutate(fixdate3 = cut.Date(fixdate, 6)) %>%
+      mutate(col_release = sort(unique(as.character(fixdate3)))[fixdate2]) 
+    
+    #------------------------------------#
+    #     Ad coordinates to blaster      #
+    #------------------------------------#
+    #countries$blast_id
+    idx <- match(x$Geo_Location, my_countries$blast_id)
+    x$longitude <- my_countries$longitude[idx]
+    x$latitude <- my_countries$latitude[idx]
+    
+    #print(head(x))
+    x$dots_lab <- paste(sep = "<br/>",
+                        paste0("<b><a href='https://www.ncbi.nlm.nih.gov/nuccore/", 
+                               x$Accession, 
+                               "'>", 
+                               x$Accession, 
+                               "</a></b>"),
+                        paste0("Host : ", x$Host),
+                        paste0("Geo Location : ", x$Geo_Location),
+                        paste0("Collection Date : ", x$Collection_Date),
+                        paste0("Release Date : ", x$Release_Date),
+                        paste0("percent identity = ", x$pident),
+                        paste0("evalue = ", x$evalue),
+                        paste0("bitscore = ", x$bitscore)
+    ) 
+    #print(my_countries@data)
+    
+    blaster_form_react$df <- x
+    blaster_form_react$my_countries <- my_countries
+    blaster_form_react$dots_pal <- dots_pal
+    
+  }, priority = 50)
   
   #----------------------------------------------------------------------------#
   #                           Filter Results                                   #
@@ -386,11 +403,10 @@ function(input, output, session) {
   }
   
   
-  blaster_filt <- reactiveVal()
-  
   
   
   observeEvent({
+    #blaster_form_react
     #input$searchSequence
     input$sel_country
     input$date_range
@@ -400,9 +416,11 @@ function(input, output, session) {
   }, {
     #print(fil_by_score_blastrf_pident())
     #print(fil_by_score_blastrf_evalue())
-    #print(fil_by_score_blastrf_bitscore())
     #print(dim(blaster_filt()))
-    x <- blaster_form_react()$df %>%
+    print("filter")
+    print(c("bitscore: ", fil_by_score_blastrf_bitscore()))
+    print(dim(blaster_form_react$df))
+    x <- blaster_form_react$df %>%
       filter(Geo_Location %in% fil_by_location()) %>%
       filter(collection_months >= fil_by_collection_date()[1] &
                collection_months <= fil_by_collection_date()[2]) %>% 
@@ -415,9 +433,10 @@ function(input, output, session) {
       # Filter by bitscore
       filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
                bitscore <= fil_by_score_blastrf_bitscore()[2])
+    #print(x)
     blaster_filt(x)
     
-  })
+  }, priority = 40)
   
   # blaster_filt <- eventReactive({
   #   input$searchSequence
@@ -431,7 +450,7 @@ function(input, output, session) {
   #     print(fil_by_score_blastrf_evalue())
   #     print(fil_by_score_blastrf_bitscore())
   #     
-  #     blaster_filt <- blaster_form_react()$df %>%
+  #     blaster_filt <- blaster_form_react$df %>%
   #       filter(Geo_Location %in% fil_by_location()) %>%
   #       filter(collection_months >= fil_by_collection_date()[1] &
   #                collection_months <= fil_by_collection_date()[2]) %>% 
@@ -569,12 +588,12 @@ function(input, output, session) {
   
   output$blastrf_bitscore <- renderUI({
     req(blaster_react())
-    
+
     bounds <- c(min(blaster_react()$bitscore), max(blaster_react()$bitscore))
     #print(bounds)
     sliderTextInput(
       inputId = "blastrf_bitscore",
-      label = "bitscore", 
+      label = "bitscore",
       choices = unique(seq(bounds[1], bounds[2], length.out = 5)),
       #choices = signif(seq(bounds[1], bounds[2], length.out = 10), 3),
       selected = bounds,
@@ -611,40 +630,20 @@ function(input, output, session) {
   #----------------------------------------------------------------------------#
   #                              Color areas                                   #
   #----------------------------------------------------------------------------#
-  
-  observe({
-    #req()
-    #print(input$date_range)
-    #print(blaster_react())
-    #print(blaster_form_react()$df)
-    if (!is.null(blaster_form_react()) ) {
-    #if (!is.null(blaster_react()) ) {
-      print(blaster_form_react()$df)
-      print(fil_by_location())
-      print(fil_by_collection_date())
-      print(fil_by_score_blastrf_pident())
-      print(fil_by_score_blastrf_evalue())
-      print(fil_by_score_blastrf_bitscore())
+  observeEvent(blaster_filt(), {
+    print("map area")
+    print(dim(blaster_filt()))
+    if (!is.null(blaster_filt()) ) {
       
-      #print(blaster_form_react()$my_countries@data)
-      blaster_summ <- blaster_form_react()$df %>%
-        filter(Geo_Location %in% fil_by_location()) %>%
-        filter(collection_months >= fil_by_collection_date()[1] &
-                 collection_months <= fil_by_collection_date()[2]) %>%
-        # Filter by pident
-        filter(pident >= fil_by_score_blastrf_pident()[1] &
-                 pident <= fil_by_score_blastrf_pident()[2]) %>% 
-        # Filter by evalue
-        filter(evalue >= fil_by_score_blastrf_evalue()[1] &
-                 evalue <= fil_by_score_blastrf_evalue()[2]) %>%
-        # Filter by bitscore
-        filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
-                 bitscore <= fil_by_score_blastrf_bitscore()[2]) %>% 
-        
-        
-        mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
-                                          paste0(Collection_Date, "-32"),
-                                          Collection_Date)) %>%
+      
+      
+      req(blaster_filt())
+      #print(blaster_form_react$my_countries@data)
+      
+      blaster_summ <- blaster_filt() %>%
+      mutate(Collection_Date2 = if_else(nchar(Collection_Date) == 7,
+                                        paste0(Collection_Date, "-32"),
+                                        Collection_Date)) %>%
         # for each country keep only the top hit
         group_by(Geo_Location) %>%
         top_n(n = 1, pident) %>%
@@ -658,11 +657,7 @@ function(input, output, session) {
         filter(cums == 1)
       
       
-      
-      
-      
-      
-      countries_react <- blaster_form_react()$my_countries[blaster_form_react()$my_countries$blast_id %in% blaster_summ$Geo_Location,]
+      countries_react <- blaster_form_react$my_countries[blaster_form_react$my_countries$blast_id %in% blaster_summ$Geo_Location,]
       colID <- names(color_area_IDs)[color_area_IDs %in% input$sel_area_col]
       
       #print(countries_react@data)
@@ -714,31 +709,21 @@ function(input, output, session) {
     
   }, priority = 5)
   
+  
+  
   #----------------------------------------------------------------------------#
   #                              Add clusters                                  #
   #----------------------------------------------------------------------------#
   
-  observe({
-    if (nrow(blaster_react()) > 0 & !is.null(blaster_form_react())) {
-      blaster_map <- blaster_form_react()$df %>%
-        filter(Geo_Location %in% fil_by_location()) %>%
-        filter(collection_months >= fil_by_collection_date()[1] &
-                 collection_months <= fil_by_collection_date()[2]) %>% 
-        # Filter by pident
-        filter(pident >= fil_by_score_blastrf_pident()[1] &
-                 pident <= fil_by_score_blastrf_pident()[2]) %>% 
-        # Filter by evalue
-        filter(evalue >= fil_by_score_blastrf_evalue()[1] &
-                 evalue <= fil_by_score_blastrf_evalue()[2]) %>%
-        # Filter by bitscore
-        filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
-                 bitscore <= fil_by_score_blastrf_bitscore()[2])
+  observeEvent(blaster_filt(), {
+    if (!is.null(blaster_filt())) {
+      print("map clusters")
+      print(dim(blaster_filt()))
       
+      blaster_map <- blaster_filt() 
+      dots_pal <- blaster_form_react$dots_pal
       
-      dots_pal <- blaster_form_react()$dots_pal
-      #dots_pal <- colorFactor(c("grey20", "grey40", "grey60", "Tomato"), domain = levels(blaster_map$radius))
-      #print(as.data.frame(blaster_map[is.na(blaster_map$latitude),]))
-      
+
       leafletProxy("map", data = blaster_map) %>%
         clearMarkerClusters() %>%
         clearMarkers() %>%
@@ -752,47 +737,11 @@ function(input, output, session) {
                          popup = blaster_map$dots_lab,
                          fillOpacity = 1)
     }
-    
-    
+
+
   }, priority = 1)
   
-  # observe({
-  #   if (nrow(blaster_react()) > 0 & !is.null(blaster_form_react())) {
-  #     blaster_map <- blaster_form_react()$df %>%
-  #       filter(Geo_Location %in% fil_by_location()) %>%
-  #       filter(collection_months >= fil_by_collection_date()[1] &
-  #                collection_months <= fil_by_collection_date()[2]) %>% 
-  #       # Filter by pident
-  #       filter(pident >= fil_by_score_blastrf_pident()[1] &
-  #                pident <= fil_by_score_blastrf_pident()[2]) %>% 
-  #       # Filter by evalue
-  #       filter(evalue <= fil_by_score_blastrf_evalue()[1] &
-  #                evalue >= fil_by_score_blastrf_evalue()[2]) %>%
-  #       # Filter by bitscore
-  #       filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
-  #                bitscore <= fil_by_score_blastrf_bitscore()[2])
-  #     
-  #     
-  #     dots_pal <- blaster_form_react()$dots_pal
-  #     #dots_pal <- colorFactor(c("grey20", "grey40", "grey60", "Tomato"), domain = levels(blaster_map$radius))
-  #     #print(as.data.frame(blaster_map[is.na(blaster_map$latitude),]))
-  #     
-  #     leafletProxy("map", data = blaster_map) %>%
-  #       clearMarkerClusters() %>%
-  #       clearMarkers() %>%
-  #       addCircleMarkers(lng = blaster_map$longitude,
-  #                        lat = blaster_map$latitude,
-  #                        radius = blaster_map$radiusfix,
-  #                        color = ~dots_pal(blaster_map$radius),
-  #                        clusterOptions = markerClusterOptions(
-  #                          spiderfyDistanceMultiplier=1.2
-  #                        ),
-  #                        popup = blaster_map$dots_lab,
-  #                        fillOpacity = 1)
-  #   }
-  #   
-  # }, priority = 1)
-  # 
+  
   
   ##--------------------------------------------------------------------------##
   ##              Get main table and fitler according to options              ##
