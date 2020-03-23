@@ -11,6 +11,24 @@ function(input, output, session) {
   #----------------------------------------------------------------------------#
   #                            Reactive Values                                 #
   #----------------------------------------------------------------------------#
+  # shinyWidgets:::toastSweetAlert(
+  #   session = session,
+  #   position = "center",
+  #   #animation = FALSE,
+  #   timer = 5000,
+  #   title = "Welcome to MapMyCorona",
+  #   text = "Click the submit button without any input if you want to try our demo sequences",
+  #   type = "info"
+  # )
+  
+  sendSweetAlert(
+    session = session,
+    title = "Welcome to MapMyCorona",
+    text = "Click the submit button without any input if you want to try our demo sequences",
+    type = "success"
+  )
+  
+  
   # save raw BLAST results
   blaster_react <- reactiveVal()
   # Format BLAST results and create col palette
@@ -364,8 +382,8 @@ function(input, output, session) {
     x$longitude <- my_countries$longitude[idx]
     x$latitude <- my_countries$latitude[idx]
     
-    print(colnames(x))
-    print(as.data.frame(head(x)))
+    # print(colnames(x))
+    # print(as.data.frame(head(x)))
     x$dots_lab <- paste(sep = "<br/>",
                         paste0("<b><a href='https://www.ncbi.nlm.nih.gov/nuccore/", 
                                x$Accession, 
