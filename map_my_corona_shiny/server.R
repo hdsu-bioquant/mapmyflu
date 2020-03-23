@@ -364,13 +364,15 @@ function(input, output, session) {
     x$longitude <- my_countries$longitude[idx]
     x$latitude <- my_countries$latitude[idx]
     
-    #print(head(x))
+    # print(colnames(x))
+    # print(head(x))
     x$dots_lab <- paste(sep = "<br/>",
                         paste0("<b><a href='https://www.ncbi.nlm.nih.gov/nuccore/", 
                                x$Accession, 
-                               "'>", 
+                               "' target='_blank'>", 
                                x$Accession, 
                                "</a></b>"),
+                        paste0("Query : ", x$qaccver),
                         paste0("Host : ", x$Host),
                         paste0("Geo Location : ", x$Geo_Location),
                         paste0("Collection Date : ", x$Collection_Date),

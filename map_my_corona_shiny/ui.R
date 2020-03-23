@@ -11,7 +11,7 @@ dashboardPage(
   #----------------------------------------------------------------------------#
   dashboardHeader(
     #title = "Map my Corona",
-    title = tags$a(href="https://www.hdsu.org/",
+    title = tags$a(href="https://www.hdsu.org/", target="_blank",
                    tags$img(src="map_my_corona_logo.png",height="50px")),
     
     tags$li(class = "dropdown",
@@ -288,15 +288,21 @@ dashboardPage(
             Biomedical Genomics Group @ Health Data Science Unit 
             at the BioQuant Center and Medical Faculty Heidelberg",
                align = "center"),
-            h4(tags$a(href="https://www.hdsu.org/", "Visit us here!"),
+            h4(tags$a(href="https://www.hdsu.org/", 
+                      target="_blank",
+                      "Visit us here!"),
                align = "center"),
             
             tags$hr(),
             
-            h1(tags$a(href="https://github.com/hdsu-bioquant/mapmyflu", icon("github")), align = "center"),
+            h1(tags$a(href="https://github.com/hdsu-bioquant/mapmyflu", 
+                      target="_blank",
+                      icon("github")), align = "center"),
             #h1(icon("github"), align = "center"),
             h4("If you have any suggestion please create an issue in our GitHub repository",
-               tags$a(href="https://github.com/hdsu-bioquant/mapmyflu", "hdsu-bioquant/mapmyflu"),
+               tags$a(href="https://github.com/hdsu-bioquant/mapmyflu", 
+                      target="_blank", 
+                      "hdsu-bioquant/mapmyflu"),
                align = "center")
             
           )
