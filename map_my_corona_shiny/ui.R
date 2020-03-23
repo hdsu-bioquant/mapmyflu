@@ -146,7 +146,7 @@ dashboardPage(
           color = "danger"
         ),
         h6("Click Submit without any input", align = "center"),
-        h6("to display results for MT188340 (nucleotide)", align = "center"),
+        h6("to display results for MT042775 (nucleotide)", align = "center"),
         h6("or QHN73805 (protein)", align = "center"),
         br()
       ),

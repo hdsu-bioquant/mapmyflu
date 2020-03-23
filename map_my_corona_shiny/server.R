@@ -9,15 +9,28 @@ library(shinyjs)
 
 function(input, output, session) {
   #----------------------------------------------------------------------------#
-  #                               read data                                    #
+  #                            Reactive Values                                 #
   #----------------------------------------------------------------------------#
-  
-  #-----------------------------------------------------------------#
-  #                            read BLAST result                    #
-  #-----------------------------------------------------------------#
-  # Reactive tibble to store blast results
+  # save raw BLAST results
+  blaster_react <- reactiveVal()
+  # Format BLAST results and create col palette
+  blaster_form_react <- reactiveValues(df = NULL)
+  # Reactive tibble to store filtered BLAST results
   blaster_filt <- reactiveVal()
   
+  #----------------------------------------------------------------------------#
+  #                                       Map                                  #
+  #----------------------------------------------------------------------------#
+  # Create the map
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      setView(42, 16, 2) %>% 
+      addProviderTiles(providers$CartoDB.DarkMatter)
+  })
+  
+  #----------------------------------------------------------------------------#
+  #                          clean status and new runs                         #
+  #----------------------------------------------------------------------------#
   clearstatus <- reactiveValues(loaded = TRUE, clear = TRUE)
   observeEvent(input$file1, {
     clearstatus$clear <- FALSE
@@ -31,10 +44,33 @@ function(input, output, session) {
   }, priority = 1000)
   
   
-  # # Clean start
+  # Clean start
+  new_run <- reactiveVal()
+  observeEvent({
+    input$searchSequence
+  }, {
+    blaster_filt(NULL)
+    print(paste(Sys.time(), "Clean up"))
+    
+    # Start with clean map
+    output$map <- renderLeaflet({
+      leaflet() %>%
+        setView(42, 16, 2) %>% 
+        addProviderTiles(providers$CartoDB.DarkMatter)
+    })
+    # leafletProxy("map") %>%
+    #   clearControls() %>%
+    #   clearShapes() %>%
+    #   clearMarkerClusters() %>%
+    #   clearMarkers()
+    
+    new_run(TRUE)
+  }, priority = 10000)
+  
+  
   # clean_start <- eventReactive(input$searchSequence, {
   #   blaster_filt(NULL)
-  #   
+  #   print("Clean up")
   #   # Start with clean map
   #   leafletProxy("map") %>%
   #     clearControls() %>%
@@ -42,15 +78,21 @@ function(input, output, session) {
   #     clearMarkerClusters() %>%
   #     clearMarkers()
   # })
-  new_run <- reactiveVal(FALSE)
   
+  #----------------------------------------------------------------------------#
+  #                              New run = BLAST                               #
+  #----------------------------------------------------------------------------#
   # blaster_react <- eventReactive(clean_start(), {
   #   clean_start()$map
   #   #print(clean_start())
-  blaster_react <- eventReactive(input$searchSequence, {
+  observeEvent({
+    #clean_start()
+    #new_run()
+    input$searchSequence
+  }, {
     demoseq <- FALSE
     #blaster_filt(NULL)
-    new_run(TRUE)
+    new_run(NULL)
     # if true will run demo or text from box
     if( clearstatus$loaded & clearstatus$clear ){
       #-----------------------------------------------------------------#
@@ -229,20 +271,23 @@ function(input, output, session) {
       mutate(collection_months = substr(Collection_Date, 1, 7)) %>% 
       mutate(evalue_log10 = -log10(evalue + 1e-13))
     
+    # Update blaster_react
+    blaster_react(align)
     
-  })
-  
+    print(paste(Sys.time(), "BLAST done"))
+    
+  }, priority = 100)
   
   #-----------------------------------------------------------------#
-  #                        format BLAST result                      #
+  #         Update blaster_form_react =  format BLAST result        #
   #-----------------------------------------------------------------#
-  blaster_form_react <- reactiveValues(df = NULL)
-  
+  #blaster_form_react <- reactiveValues(df = NULL)
   observeEvent({
     input$score_id
+    input$sel_area_col
     blaster_react()
   }, {
-    
+    print(paste(Sys.time(), "new layout"))
     req(blaster_react())
     
     
@@ -391,6 +436,8 @@ function(input, output, session) {
   
   observeEvent({
     #blaster_form_react
+    input$score_id
+    input$sel_area_col
     input$sel_country
     input$date_range
     input$blastrf_pident
@@ -566,12 +613,12 @@ function(input, output, session) {
   
   ## Interactive Map ###########################################
   
-  # Create the map
-  output$map <- renderLeaflet({
-    leaflet() %>%
-      setView(42, 16, 2) %>% 
-      addProviderTiles(providers$CartoDB.DarkMatter)
-  })
+  # # Create the map
+  # output$map <- renderLeaflet({
+  #   leaflet() %>%
+  #     setView(42, 16, 2) %>% 
+  #     addProviderTiles(providers$CartoDB.DarkMatter)
+  # })
   
   # output$empty_map <- renderLeaflet({
   #   leaflet() %>%
@@ -583,7 +630,10 @@ function(input, output, session) {
   #----------------------------------------------------------------------------#
   #                              Color areas                                   #
   #----------------------------------------------------------------------------#
-  observeEvent(blaster_filt(), {
+  observeEvent({
+    blaster_filt()
+    input$sel_area_col
+    }, {
     # print("map area")
     # print(dim(blaster_filt()))
     if (!is.null(blaster_filt()) ) {
