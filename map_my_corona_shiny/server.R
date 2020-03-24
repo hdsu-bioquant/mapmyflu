@@ -11,22 +11,30 @@ function(input, output, session) {
   #----------------------------------------------------------------------------#
   #                            Reactive Values                                 #
   #----------------------------------------------------------------------------#
-  # shinyWidgets:::toastSweetAlert(
-  #   session = session,
-  #   position = "center",
-  #   #animation = FALSE,
-  #   timer = 5000,
-  #   title = "Welcome to MapMyCorona",
-  #   text = "Click the submit button without any input if you want to try our demo sequences",
-  #   type = "info"
-  # )
-  #shinyjs::hide(selector = "ul.menu-open")
   sendSweetAlert(
     session = session,
-    title = "Welcome to MapMyCorona",
-    text = "Click the submit button without any input if you want to try our demo sequences",
-    type = "success"
+    title = NULL,
+    text = tags$span(
+      tags$br(),
+      tags$strong(h1("Welcome to")),
+      tags$br(),
+      tags$img(src="map_my_corona_logo.png",height="100px"),
+      tags$br(),
+      tags$br(),
+      "Click the", 
+      tags$b("submit"),
+      " button without any input if you want to try our demo sequences", 
+      tags$br()
+    ),
+    html = TRUE
   )
+  
+  # sendSweetAlert(
+  #   session = session,
+  #   title = "Welcome to MapMyCorona",
+  #   text = "Click the submit button without any input if you want to try our demo sequences",
+  #   type = "success"
+  # )
   toggle(id = "searchseq", anim = TRUE, animType = "slide",
               time = 1.5, selector = NULL, asis = FALSE)
   
