@@ -134,6 +134,8 @@ function(input, output, session) {
             text = "please check if the sequence contains header and is of the correct type",
             type = "error"
           )
+          blaster_react(NULL)
+          blaster_form_react$df <- NULL
           return(NULL)
         }
         
@@ -186,6 +188,8 @@ function(input, output, session) {
           text = "please check if the sequence contains header and is of the correct type",
           type = "error"
         )
+        blaster_react(NULL)
+        blaster_form_react$df <- NULL
         return(NULL)
       }
       
@@ -267,7 +271,7 @@ function(input, output, session) {
     #--------------------------------------------------------------------------#
     #                               BLAST results                              #
     #--------------------------------------------------------------------------#
-    
+    #print(blaster_react())
     # Check if results are empty
     if (length(align) == 0) {
       sendSweetAlert(
@@ -276,9 +280,11 @@ function(input, output, session) {
         text = "Please check if sequence is of the correct type and Blast options",
         type = "error"
       )
+      blaster_react(NULL)
+      blaster_form_react$df <- NULL
       return(NULL)
     } 
-    
+    #print(blaster_react())
     # Create table from alignmet result, merge with metada and sort
     align <- do.call("rbind", strsplit(align, "\t"))
     colnames(align) <- c("qaccver", "Accession", "pident", "length", 
@@ -410,7 +416,7 @@ function(input, output, session) {
     blaster_form_react$df <- x
     blaster_form_react$my_countries <- my_countries
     blaster_form_react$dots_pal <- dots_pal
-    
+    #print(blaster_form_react$df)
   }, priority = 50)
   
   #----------------------------------------------------------------------------#
@@ -461,7 +467,7 @@ function(input, output, session) {
   
   
   observeEvent({
-    #blaster_form_react
+    blaster_form_react$df
     input$score_id
     input$sel_area_col
     input$sel_country
@@ -476,6 +482,7 @@ function(input, output, session) {
     # print("filter")
     # print(c("bitscore: ", fil_by_score_blastrf_bitscore()))
     # print(dim(blaster_form_react$df))
+    req(blaster_form_react$df)
     x <- blaster_form_react$df %>%
       filter(Geo_Location %in% fil_by_location()) %>%
       filter(collection_months >= fil_by_collection_date()[1] &
@@ -535,14 +542,18 @@ function(input, output, session) {
   
   # Date selector
   output$date_range <- renderUI({
+    blaster_react()
+    input$searchSequence
+    #print(blaster_react())
+
     collection_months <- sort(unique(blaster_react()$collection_months))
-    
+
     if (length(collection_months) == 0 | is.null(collection_months)) {
       #collection_months <- c(0,0)
       #collection_months <- NULL
       # sliderTextInput(
       #   inputId = "date_range",
-      #   label = "Date Range:", 
+      #   label = "Date Range:",
       #   choices = collection_months
       #   #selected = NULL
       # )
@@ -550,14 +561,27 @@ function(input, output, session) {
     } else {
       sliderTextInput(
         inputId = "date_range",
-        label = "Date Range:", 
+        label = "Date Range:",
         choices = collection_months,
         selected = collection_months[c(1, length(collection_months))]
       )
     }
-    
-    
   })
+
+  # observeEvent(input$searchSequence, {
+  #   print("slider")
+  #   updateSliderTextInput(
+  #     session,
+  #     inputId = "date_range",
+  #     label = "Date Range:",
+  #     selected = NULL,
+  #     choices = NULL,
+  #     from_fixed = NULL,
+  #     to_fixed = NULL
+  #   )
+  # })
+  
+  
   
   
   output$totalhits <- renderValueBox({

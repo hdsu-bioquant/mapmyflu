@@ -488,6 +488,20 @@ dashboardPage(
             background = "black",
             uiOutput("date_range") 
             
+            # sliderTextInput(
+            #   inputId = "date_range",
+            #   label = "Date Range:",
+            #   choices = NULL,
+            #   selected = NULL
+            # )
+            # sliderTextInput(
+            #   inputId = "date_range",
+            #   label = "Date Range:",
+            #   choices = 1:5,
+            #   selected = 1
+            # )
+            
+            
           ),
           
           # box(
