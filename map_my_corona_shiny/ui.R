@@ -113,7 +113,7 @@ dashboardPage(
           numericInput(
             inputId = "blast_nres", 
             label = "Number of results:", 
-            value = 50000,
+            value = 5000000,
             min = 1, 
             max = NA, 
             step = NA, 
