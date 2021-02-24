@@ -113,7 +113,7 @@ dashboardPage(
           numericInput(
             inputId = "blast_nres", 
             label = "Number of results:", 
-            value = 500,
+            value = 50000,
             min = 1, 
             max = NA, 
             step = NA, 
@@ -237,7 +237,8 @@ dashboardPage(
           
           
           uiOutput("blastrf_pident"),
-          uiOutput("blastrf_evalue"),
+          #uiOutput("blastrf_evalue"),
+          uiOutput("blastrf_mismatch"),
           uiOutput("blastrf_bitscore")
           
         )

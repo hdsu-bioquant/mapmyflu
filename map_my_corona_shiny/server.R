@@ -248,14 +248,21 @@ function(input, output, session) {
         # Run Blast
         align <- system(paste0(blast_strn, blast_stro), intern = TRUE)
         anno_query <- read.csv("data/SARScov2_nucleotide_metadata.csv",
-                               header=TRUE, stringsAsFactors = FALSE)
+                               header=TRUE, stringsAsFactors = FALSE)%>% 
+          mutate(Geo_Location2 = Geo_Location) %>% 
+          mutate(Geo_Location = sub(":.*", "", Geo_Location)) %>% 
+          mutate(Geo_Location = if_else(Geo_Location == "Hong Kong", "China", Geo_Location))
       } else {
         # Blast command
         blast_strp <- paste0("bin/binm/blastp -query ", my_path, " -task blastp -db db/protein/covid19 ")
         # Run Blast
         align <- system(paste0(blast_strp, blast_stro), intern = TRUE)
         anno_query <- read.csv("data/SARScov2_protein_metadata.csv",
-                               header=TRUE, stringsAsFactors = FALSE)
+                               header=TRUE, stringsAsFactors = FALSE) %>% 
+          mutate(Geo_Location2 = Geo_Location) %>% 
+          mutate(Geo_Location = sub(":.*", "", Geo_Location)) %>% 
+          mutate(Geo_Location = if_else(Geo_Location == "Hong Kong", "China", Geo_Location)) 
+          
       }
     } else {
       if (input$seq_type == "nucleotide") {
@@ -264,14 +271,20 @@ function(input, output, session) {
         # Run Blast
         align <- system(paste0(blast_strn, blast_stro), intern = TRUE)
         anno_query <- read.csv("data/SARScov2_nucleotide_metadata.csv",
-                               header=TRUE, stringsAsFactors = FALSE)
+                               header=TRUE, stringsAsFactors = FALSE) %>% 
+          mutate(Geo_Location2 = Geo_Location) %>% 
+          mutate(Geo_Location = sub(":.*", "", Geo_Location)) %>% 
+          mutate(Geo_Location = if_else(Geo_Location == "Hong Kong", "China", Geo_Location))
       } else {
         # Blast command
         blast_strp <- paste0("bin/blastp -query ", my_path, " -task blastp -db db/protein/covid19 ")
         # Run Blast
         align <- system(paste0(blast_strp, blast_stro), intern = TRUE)
         anno_query <- read.csv("data/SARScov2_protein_metadata.csv",
-                               header=TRUE, stringsAsFactors = FALSE)
+                               header=TRUE, stringsAsFactors = FALSE) %>% 
+          mutate(Geo_Location2 = Geo_Location) %>% 
+          mutate(Geo_Location = sub(":.*", "", Geo_Location)) %>% 
+          mutate(Geo_Location = if_else(Geo_Location == "Hong Kong", "China", Geo_Location))
       }
     }
     
@@ -298,16 +311,18 @@ function(input, output, session) {
     colnames(align) <- c("qaccver", "Accession", "pident", "length", 
                          "mismatch", "gapopen", "qstart", "qend", "sstart", 
                          "send", "evalue", "bitscore")
+    #print(head(align))
     align <- as_tibble(align) %>% 
       mutate_at(c("pident", "length", "mismatch", "gapopen", "qstart", "qend", 
                   "sstart", "send", "evalue", "bitscore"), as.numeric) %>% 
+      mutate(Accession = sub("\\..*", "", Accession)) %>% 
       left_join(anno_query, by = "Accession") %>% 
       arrange(desc(pident), evalue, desc(bitscore)) %>% 
       filter(!Geo_Location == "") %>% 
       filter(pident >= input$blast_pident_range[1] & pident <= input$blast_pident_range[2]) %>% 
       mutate(collection_months = substr(Collection_Date, 1, 7)) %>% 
       mutate(evalue_log10 = -log10(evalue + 1e-13))
-    
+    #print(align)
     # Update blaster_react
     blaster_react(align)
     
@@ -339,7 +354,7 @@ function(input, output, session) {
       mutate(radius = cut(!! sym(score_id), 4)) 
     radius_levels <- setNames(seq(2, 8, 2), levels(x$radius))
     
-    
+    #print(table(x$Geo_Location))
     #radius_levels <- setNames(seq(3, 12, 3), levels(blaster$radius))
     x <- x %>% 
       mutate(radius = recode(radius, !!!radius_levels)) %>% 
@@ -398,11 +413,19 @@ function(input, output, session) {
     #------------------------------------#
     #countries$blast_id
     idx <- match(x$Geo_Location, my_countries$blast_id)
+    #print(paste0("Invalid coords sum: ", sum(is.na(idx))))
     x$longitude <- my_countries$longitude[idx]
     x$latitude <- my_countries$latitude[idx]
     
     # print(colnames(x))
-    # print(as.data.frame(head(x)))
+    #print(as.data.frame(head(x)))
+    #print(table(as.data.frame(x[is.na(idx),])$Geo_Location))
+    
+    #### WARNING this removes all hits where the db did not found the countries
+    
+    x <- x[!is.na(idx),]
+    
+    
     x$dots_lab <- paste(sep = "<br/>",
                         paste0("<b><a href='https://www.ncbi.nlm.nih.gov/nuccore/", 
                                x$Accession, 
@@ -416,8 +439,8 @@ function(input, output, session) {
                         paste0("Release Date : ", as.Date(x$Release_Date)),
                         paste0("percent identity = ", x$pident),
                         paste0("evalue = ", x$evalue),
-                        paste0("bitscore = ", x$bitscore),
-                        paste0("Definition = ", x$GenBank_Title)
+                        paste0("bitscore = ", x$bitscore)
+                        #paste0("Definition = ", x$GenBank_Title)
     ) 
     #print(my_countries@data)
     
@@ -457,11 +480,19 @@ function(input, output, session) {
     }
   }
   
-  fil_by_score_blastrf_evalue <- function() {
-    if (length(input$blastrf_evalue) == 0) {
-      c(min(blaster_react()$evalue), max(blaster_react()$evalue))
+  # fil_by_score_blastrf_evalue <- function() {
+  #   if (length(input$blastrf_evalue) == 0) {
+  #     c(min(blaster_react()$evalue), max(blaster_react()$evalue))
+  #   } else {
+  #     input$blastrf_evalue
+  #   }
+  # }
+  
+  fil_by_score_blastrf_mismatch <- function() {
+    if (length(input$blastrf_mismatch) == 0) {
+      c(min(blaster_react()$mismatch), max(blaster_react()$mismatch))
     } else {
-      input$blastrf_evalue
+      input$blastrf_mismatch
     }
   }
   
@@ -481,7 +512,7 @@ function(input, output, session) {
     input$sel_country
     input$date_range
     input$blastrf_pident
-    input$blastrf_evalue
+    input$blastrf_mismatch
     input$blastrf_bitscore
   }, {
     #print(fil_by_score_blastrf_pident())
@@ -498,9 +529,12 @@ function(input, output, session) {
       # Filter by pident
       filter(pident >= fil_by_score_blastrf_pident()[1] &
                pident <= fil_by_score_blastrf_pident()[2]) %>% 
-      # Filter by evalue
-      filter(evalue >= fil_by_score_blastrf_evalue()[1] &
-               evalue <= fil_by_score_blastrf_evalue()[2]) %>%
+      # # Filter by evalue
+      # filter(evalue >= fil_by_score_blastrf_evalue()[1] &
+      #          evalue <= fil_by_score_blastrf_evalue()[2]) %>%
+      # Filter by mismatch
+      filter(mismatch >= fil_by_score_blastrf_mismatch()[1] &
+               mismatch <= fil_by_score_blastrf_mismatch()[2]) %>% 
       # Filter by bitscore
       filter(bitscore >= fil_by_score_blastrf_bitscore()[1] &
                bitscore <= fil_by_score_blastrf_bitscore()[2])
@@ -669,6 +703,23 @@ function(input, output, session) {
     )
   })
   
+  output$blastrf_mismatch <- renderUI({
+    req(blaster_react())
+    
+    bounds <- c(min(blaster_react()$mismatch), max(blaster_react()$mismatch))
+    #print(bounds)
+    sliderTextInput(
+      inputId = "blastrf_mismatch",
+      label = "Number of mismatches", 
+      #choices = unique(seq(bounds[1], bounds[2], length.out = 5)),
+      choices = bounds[1]:bounds[2],
+      selected = bounds,
+      from_min = bounds[1],
+      from_max =  bounds[2],
+      grid = TRUE
+    )
+  })
+  
   output$blastrf_bitscore <- renderUI({
     req(blaster_react())
 
@@ -689,6 +740,7 @@ function(input, output, session) {
   
   outputOptions(output, "blastrf_pident", suspendWhenHidden = FALSE)
   outputOptions(output, "blastrf_evalue", suspendWhenHidden = FALSE)
+  outputOptions(output, "blastrf_mismatch", suspendWhenHidden = FALSE)
   outputOptions(output, "blastrf_bitscore", suspendWhenHidden = FALSE)
   #----------------------------------------------------------------------------#
   #                                       Map                                  #
