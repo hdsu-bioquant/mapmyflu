@@ -247,11 +247,7 @@ function(input, output, session) {
         blast_strn <- paste0("bin/binm/blastn -query ", my_path, " -task megablast -db db/nucleotide/covid19 ")
         # Run Blast
         align <- system(paste0(blast_strn, blast_stro), intern = TRUE)
-        anno_query <- read.csv("data/SARScov2_nucleotide_metadata.csv",
-                               header=TRUE, stringsAsFactors = FALSE)%>% 
-          mutate(Geo_Location2 = Geo_Location) %>% 
-          mutate(Geo_Location = sub(":.*", "", Geo_Location)) %>% 
-          mutate(Geo_Location = if_else(Geo_Location == "Hong Kong", "China", Geo_Location))
+        anno_query <- readRDS("data/SARScov2_nucleotide_metadata.RDS")
       } else {
         # Blast command
         blast_strp <- paste0("bin/binm/blastp -query ", my_path, " -task blastp -db db/protein/covid19 ")
@@ -270,11 +266,7 @@ function(input, output, session) {
         blast_strn <- paste0("bin/blastn -query ", my_path, " -task megablast -db db/nucleotide/covid19 ")
         # Run Blast
         align <- system(paste0(blast_strn, blast_stro), intern = TRUE)
-        anno_query <- read.csv("data/SARScov2_nucleotide_metadata.csv",
-                               header=TRUE, stringsAsFactors = FALSE) %>% 
-          mutate(Geo_Location2 = Geo_Location) %>% 
-          mutate(Geo_Location = sub(":.*", "", Geo_Location)) %>% 
-          mutate(Geo_Location = if_else(Geo_Location == "Hong Kong", "China", Geo_Location))
+        anno_query <- readRDS("data/SARScov2_nucleotide_metadata.RDS")
       } else {
         # Blast command
         blast_strp <- paste0("bin/blastp -query ", my_path, " -task blastp -db db/protein/covid19 ")
