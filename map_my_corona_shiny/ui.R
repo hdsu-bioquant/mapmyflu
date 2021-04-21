@@ -2,7 +2,7 @@ library(leaflet)
 library(shinydashboard)
 library(shinyWidgets)
 library(shinyjs)
-
+library(waiter)
 
 dashboardPage(
   title="MapMyCorona",
@@ -65,6 +65,8 @@ dashboardPage(
       h6("for SARS CoV-2 sequences (protein or DNA)", align = "center"),
       h6("which displays the top hits", align = "center"),
       h6("in a spatial and temporal fashion.", align = "center"),
+      h6(paste0("Last update: ", as.Date(file.info("db/nucleotide/covid19.ndb")$ctime)), align = "center"),
+      
       tags$hr(),
       
       
@@ -113,7 +115,7 @@ dashboardPage(
           numericInput(
             inputId = "blast_nres", 
             label = "Number of results:", 
-            value = 5000000,
+            value = 5000,
             min = 1, 
             max = NA, 
             step = NA, 
@@ -270,6 +272,7 @@ dashboardPage(
   #----------------------------------------------------------------------------#
   dashboardBody(
     useShinyjs(),
+    use_waiter(),
     tags$head(
       tags$style(
         HTML(".shiny-notification {

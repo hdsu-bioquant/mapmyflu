@@ -4,7 +4,7 @@ library(scales)
 library(ggplot2)
 library(dplyr)
 library(shinyjs)
-
+library(waiter)
 
 
 function(input, output, session) {
@@ -109,6 +109,18 @@ function(input, output, session) {
   #----------------------------------------------------------------------------#
   #                              New run = BLAST                               #
   #----------------------------------------------------------------------------#
+  w <- Waiter$new(html = tagList(
+    #     tags$br(),
+    tags$strong(h1("Blasting the sequence...")),
+    #     tags$br(),
+    tags$br(),
+    html = spin_cube_grid(),
+    tags$br(),
+    tags$strong(h1("Please wait while we blast your sequence to the database")),
+    #     tags$br(),
+    tags$br()
+  ))
+  
   # blaster_react <- eventReactive(clean_start(), {
   #   clean_start()$map
   #   #print(clean_start())
@@ -216,37 +228,7 @@ function(input, output, session) {
     #--------------------------------------------------------------------------#
     #                               Run BLAST                                  #
     #--------------------------------------------------------------------------#
-    # w <- Waiter$new(html = tagList(
-    #   #     tags$br(),
-    #   tags$strong(h1("Blasting the sequence...")),
-    #   #     tags$br(),
-    #   tags$br(),
-    #   html = spin_cube_grid(),
-    #   tags$br(),
-    #   tags$strong(h1("Please wait while we blast your sequence to the database")),
-    #   #     tags$br(),
-    #   tags$br()
-    # ))
-    
-    if (!demoseq) {
-      shinyWidgets:::toastSweetAlert(
-        session = session,
-        position = "center",
-        #animation = FALSE,
-        timer = 3000,
-        title = "Blasting the sequence...",
-        text = "Please wait while we blast your sequence to the database",
-        type = "info"
-      )
-    }
-    
-    
-    # sendSweetAlert(
-    #   session = session,
-    #   title = "Blasting the sequence...",
-    #   text = "Please wait while we blast your seqeunce to the database",
-    #   type = "info"
-    # )
+    w$show( )
     
     # Blast optioms
     blast_stro <- paste0("-max_target_seqs ", input$blast_nres, 
@@ -324,6 +306,8 @@ function(input, output, session) {
     blaster_react(align)
     
     print(paste(Sys.time(), "BLAST done"))
+    
+    waiter_hide()
     
   }, priority = 100)
   
