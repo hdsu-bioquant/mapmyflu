@@ -26,7 +26,7 @@ dir.create("db/nucleotide")
 # file.copy(from = "~/Downloads/sequences.fasta", to = "db/nucleotide/covid19.fasta")
 
 # Create database
-system(paste0("bin/binm/makeblastdb -in db/nucleotide/covid19.fasta -dbtype nucl -input_type 'fasta' -out  db/nucleotide/covid19 -taxid 2697049"), wait =T)
+system(paste0("bin/binm/makeblastdb -in archive/nucleotide_fasta/sequences.fasta -dbtype nucl -input_type 'fasta' -out  db/nucleotide/covid19 -taxid 2697049"), wait =T)
 
 
 #------------------------------------------------------------------------------#
